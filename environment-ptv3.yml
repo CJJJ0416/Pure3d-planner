@@ -1,0 +1,18 @@
+name: pure3d-ptv3
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+      - --extra-index-url https://download.pytorch.org/whl/cu128
+      - torch==2.10.0+cu128
+      - numpy==1.26.4
+      - huggingface_hub==2.4.0
+      - socksio==1.0.0
+      - pytest==9.2.0
+      - jupyterlab==4.6.5
+      - ipykernel==7.4.0
+      - matplotlib==3.11.2
+      - ipywidgets==8.1.9
+      - -e ./utils/PointTransformerV3

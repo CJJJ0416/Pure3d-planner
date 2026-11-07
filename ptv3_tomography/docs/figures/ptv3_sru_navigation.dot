@@ -1,0 +1,54 @@
+digraph Navigation {
+  graph [
+    rankdir=TB,
+    bgcolor="#f7f9fc",
+    pad="0.35",
+    nodesep="0.42",
+    ranksep="0.58",
+    splines=ortho,
+    outputorder=edgesfirst,
+    dpi=170,
+    fontname="Noto Sans CJK SC",
+    labelloc=t,
+    labeljust=c,
+    label=<<FONT POINT-SIZE="26" COLOR="#172b4d"><B>单帧 LiDAR · PTv3 · SRU 导航框架</B></FONT><BR/><FONT POINT-SIZE="14" COLOR="#52657d">每个控制时刻输入当前帧，SRU 状态连接相邻时刻</FONT>>
+  ];
+  node [shape=box, style="rounded,filled", fontname="Noto Sans CJK SC", fontsize=16,
+        color="#93a5b8", fillcolor="#ffffff", fontcolor="#172b4d", penwidth=1.4,
+        margin="0.24,0.16"];
+  edge [color="#6d8096", penwidth=2, arrowsize=0.85];
+
+  lidar [label=<<B>当前帧 LiDAR</B><BR/><FONT POINT-SIZE="13">有效点云 Pₜ · 雷达坐标系</FONT>>,
+         fillcolor="#ffffff", color="#95a9bf", width=2.8];
+  encoder [label=<<B>预训练 PTv3</B><BR/><FONT POINT-SIZE="13">导航阶段参数冻结</FONT>>,
+           fillcolor="#e6f0ff", color="#5887c9", width=2.8];
+  features [label=<<B>当前空间特征 Fₜ</B><BR/><FONT POINT-SIZE="13">位置坐标 + 学习到的特征</FONT>>,
+            fillcolor="#eef4ff", color="#88a8d4", width=2.8];
+  adapter [label=<<B>空间特征适配与融合</B><BR/><FONT POINT-SIZE="13">读取空间特征并融合辅助输入</FONT>>,
+           fillcolor="#e7f5eb", color="#60a779", width=3.2];
+  memory [label=<<B>SRU</B><BR/><FONT POINT-SIZE="13">递归更新时序记忆</FONT>>,
+          fillcolor="#e7f5eb", color="#60a779", width=2.8];
+  actor [label=<<B>Actor 策略头</B><BR/><FONT POINT-SIZE="13">根据 SRU 特征生成动作</FONT>>,
+         fillcolor="#e7f5eb", color="#60a779", width=2.8];
+  velocity [label=<<B>速度指令</B><BR/><FONT POINT-SIZE="13">vₓ · vᵧ · ω_z</FONT>>,
+            fillcolor="#f0ebff", color="#a28bc6", width=2.8];
+
+  motion [label=<<B>运动信息</B><BR/><FONT POINT-SIZE="13">相对雷达 odom</FONT><BR/><FONT POINT-SIZE="13">时间差 Δt</FONT>>,
+          fillcolor="#fff9ed", color="#d0ad68", width=2.3];
+  target [label=<<B>任务与状态</B><BR/><FONT POINT-SIZE="13">相对目标</FONT><BR/><FONT POINT-SIZE="13">机器人状态</FONT>>,
+          fillcolor="#fff9ed", color="#d0ad68", width=2.3];
+  previous [label=<<B>上一时刻状态</B><BR/><FONT POINT-SIZE="13">hₜ₋₁ · cₜ₋₁</FONT>>,
+            fillcolor="#fff2df", color="#d4a366", width=2.3];
+  next [label=<<B>当前状态</B><BR/><FONT POINT-SIZE="13">hₜ · cₜ → 下一时刻</FONT>>,
+        fillcolor="#fff2df", color="#d4a366", width=2.3];
+
+  lidar -> encoder -> features -> adapter -> memory -> actor -> velocity;
+  { rank=same; motion; adapter; target; }
+  { rank=same; previous; memory; next; }
+  motion -> adapter [color="#bd9550"];
+  target -> adapter [color="#bd9550"];
+  previous -> memory [color="#c18b48"];
+  memory -> next [color="#c18b48"];
+  motion -> target [style=invis, weight=2];
+  previous -> next [style=invis, weight=2];
+}

@@ -1,0 +1,67 @@
+{
+  "status": "canonical_sources_relocated",
+  "policy": "Old files remain unchanged only because recorded datasets pin their hashes. New work uses this project.",
+  "files": [
+    {
+      "original": "/home/cjh/glocal2-nav/isaac_training/src/isaac_nav/data/tomography_pairs.py",
+      "canonical": "/home/cjh/glocal2-nav/src/ptv3_tomography/src/ptv3_tomography/data/tomography_pairs.py",
+      "original_sha256": "cd4e3d8c046e88046e17836356cc1f06f5f52691cb72dab337fd5c2d3e129acc",
+      "historical_original_preserved": true
+    },
+    {
+      "original": "/home/cjh/glocal2-nav/isaac_training/src/isaac_nav/data/lidar_reference_pairs.py",
+      "canonical": "/home/cjh/glocal2-nav/src/ptv3_tomography/src/ptv3_tomography/data/lidar_reference_pairs.py",
+      "original_sha256": "da7cb4679c141ebf3b3d3a7a09fcee592491fd7307fdb1d9345d94438df21cbe",
+      "historical_original_preserved": true
+    },
+    {
+      "original": "/home/cjh/glocal2-nav/isaac_training/scripts/perception/pair_mid360_lidar_reference.py",
+      "canonical": "/home/cjh/glocal2-nav/src/ptv3_tomography/scripts/data/pair_mid360_lidar_reference.py",
+      "original_sha256": "a288f73dc99b188468fef39a640b535b39fc8bd100024b3db45b9d16da70d479",
+      "historical_original_preserved": true
+    },
+    {
+      "original": "/home/cjh/glocal2-nav/isaac_training/scripts/validation/validate_lidar_reference_pairs.py",
+      "canonical": "/home/cjh/glocal2-nav/src/ptv3_tomography/scripts/validation/validate_lidar_reference_pairs.py",
+      "original_sha256": "146617b52616be21207d2548a3864946089f044ecc2fcb00d0bdbdbcc926578f",
+      "historical_original_preserved": true,
+      "canonical_status": "historical_test_entrypoint_removed",
+      "source_archive": "outputs/source_cleanup_20261104/removed_sources.tar.gz"
+    },
+    {
+      "original": "/home/cjh/glocal2-nav/isaac_training/scripts/validation/check_lidar_reference_small.py",
+      "canonical": "/home/cjh/glocal2-nav/src/ptv3_tomography/scripts/validation/check_lidar_reference_small.py",
+      "original_sha256": "a5adc6f317c512a4721920bf6ea748ee75c27ff8940c9ccdb9b26359896a0c53",
+      "historical_original_preserved": true,
+      "canonical_status": "historical_test_entrypoint_removed",
+      "source_archive": "outputs/source_cleanup_20261104/removed_sources.tar.gz"
+    },
+    {
+      "original": "/home/cjh/glocal2-nav/isaac_training/scripts/perception/inspect_lidar_reference_pairs.py",
+      "canonical": "/home/cjh/glocal2-nav/src/ptv3_tomography/scripts/visualization/inspect_lidar_reference_pairs.py",
+      "original_sha256": "24f2c8e2671232c58aea90552d463cc5a2eb2406b169e1f3bc0b315317c9d54a",
+      "historical_original_preserved": true,
+      "canonical_status": "historical_test_entrypoint_removed"
+    },
+    {
+      "original": "/home/cjh/glocal2-nav/configs/tomography_pairing_v1.json",
+      "canonical": "/home/cjh/glocal2-nav/src/ptv3_tomography/configs/tomography_pairing_v1.json",
+      "original_sha256": "1a3a57c45b42486d54bbdf48717260e5538899635e5058472d9aade2607df768",
+      "historical_original_preserved": true
+    },
+    {
+      "original": "/home/cjh/glocal2-nav/configs/tomography_pairing_lidar_v2.json",
+      "canonical": "/home/cjh/glocal2-nav/src/ptv3_tomography/configs/tomography_pairing_lidar_v2.json",
+      "original_sha256": "cc86089864503f50a431cc03ce4890c7f0270f58fb0ca51460ecbcd6a6bb5340",
+      "historical_original_preserved": true
+    },
+    {
+      "original": "/home/cjh/glocal2-nav/configs/perception_small_check.json",
+      "canonical": "/home/cjh/glocal2-nav/src/ptv3_tomography/configs/perception_small_check.json",
+      "original_sha256": "76c8180a92c0b8f2479f15a6e017607877b1121623df582962bb370f849053c3",
+      "historical_original_preserved": true,
+      "canonical_status": "historical_test_entrypoint_removed",
+      "source_archive": "outputs/source_cleanup_20261104/removed_sources.tar.gz"
+    }
+  ]
+}

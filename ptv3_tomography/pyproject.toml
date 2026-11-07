@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ptv3-tomography"
+version = "0.1.0"
+description = "Single-frame LiDAR PTv3 training, map decoding and Tomography data tools"
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.26"]
+
+[project.optional-dependencies]
+validation = ["trimesh>=4"]
+training = ["torch>=2.10"]
+visualization = ["matplotlib>=3.8", "pillow>=10", "trimesh>=4"]
+
+[tool.setuptools.packages.find]
+where = ["src"]

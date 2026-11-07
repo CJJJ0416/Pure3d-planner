@@ -1,0 +1,286 @@
+{
+  "name": "rom_inspired_mixed_playground",
+  "seed": 20261104,
+  "size_m": [
+    56.0,
+    48.0
+  ],
+  "deck_height_m": 2.4,
+  "slab_thickness_m": 0.24,
+  "sample_spacing_m": 0.05,
+  "bridge_width_m": 1.05,
+  "bridge_amplitude_m": 1.25,
+  "spiral_steps": 30,
+  "spiral_turn_degrees": 450.0,
+  "open_stair_steps": 16,
+  "underpass_landing_size_m": [
+    6.0,
+    5.0
+  ],
+  "switchback_steps_per_flight": 8,
+  "obstacle_count": 12,
+  "planning_margin_m": 0.6,
+  "minimum_structure_gap_m": 1.8,
+  "layout_edge_margin_m": 2.6,
+  "layout_attempts": 128,
+  "orientation_mode": "independent_random_yaw",
+  "vst": {
+    "resolution": 0.1,
+    "ground_h": 0.0,
+    "slice_dh": 0.5,
+    "kernel_size": 7,
+    "interval_min": 0.5,
+    "interval_free": 0.5,
+    "slope_max": 0.4,
+    "step_max": 0.3,
+    "standable_ratio": 0.1,
+    "cost_barrier": 60.0,
+    "safe_margin": 0.5,
+    "safe_margin_gamma": 1,
+    "inflation": 0.1
+  },
+  "planner": {
+    "cost_threshold": 15.0
+  },
+  "validation": {
+    "body_radius": 0.18,
+    "body_height": 0.5,
+    "max_step": 0.25,
+    "support_tolerance": 0.12
+  },
+  "obstacle_shapes": [
+    "box",
+    "cylinder",
+    "wedge"
+  ],
+  "obstacle_size_range_m": [
+    [
+      0.35,
+      1.1
+    ],
+    [
+      0.35,
+      0.95
+    ],
+    [
+      0.25,
+      1.4
+    ]
+  ],
+  "geometry_randomization": {
+    "enabled": true,
+    "uniform": {
+      "deck_height_m": [
+        1.8,
+        2.8
+      ],
+      "bridge_width_m": [
+        0.85,
+        1.4
+      ],
+      "bridge_amplitude_m": [
+        0.75,
+        1.65
+      ],
+      "west_deck_size_m": [
+        [
+          3.5,
+          7.0
+        ],
+        [
+          5.5,
+          9.0
+        ]
+      ],
+      "east_deck_size_m": [
+        [
+          3.5,
+          7.0
+        ],
+        [
+          3.5,
+          7.0
+        ]
+      ],
+      "underpass_landing_size_m": [
+        [
+          3.4,
+          8.0
+        ],
+        [
+          3.0,
+          7.0
+        ]
+      ],
+      "ramp_landing_size_m": [
+        [
+          2.5,
+          3.8
+        ],
+        [
+          2.0,
+          3.5
+        ]
+      ],
+      "open_stair_landing_size_m": [
+        [
+          2.5,
+          4.5
+        ],
+        [
+          1.8,
+          4.0
+        ]
+      ],
+      "open_stair_depth_m": [
+        0.25,
+        0.6
+      ],
+      "open_stair_width_m": [
+        0.8,
+        2.8
+      ],
+      "switchback_depth_m": [
+        [
+          0.26,
+          0.38
+        ],
+        [
+          0.28,
+          0.4
+        ]
+      ],
+      "switchback_width_m": [
+        0.8,
+        2.0
+      ],
+      "switchback_landing_depth_m": [
+        1.0,
+        1.6
+      ],
+      "switchback_top_size_m": [
+        [
+          1.8,
+          2.4
+        ],
+        [
+          1.6,
+          2.4
+        ]
+      ],
+      "spiral_outer_radius_m": [
+        2.0,
+        3.2
+      ],
+      "spiral_connector_size_m": [
+        [
+          2.4,
+          3.3
+        ],
+        [
+          2.4,
+          3.3
+        ]
+      ],
+      "solid_stair_depth_m": [
+        0.3,
+        0.45
+      ],
+      "solid_stair_width_m": [
+        1.0,
+        1.7
+      ],
+      "west_ramp_width_m": [
+        1.3,
+        2.2
+      ],
+      "east_ramp_width_m": [
+        1.3,
+        2.2
+      ],
+      "open_stair_bend_degrees": [
+        -80.0,
+        80.0
+      ],
+      "open_stair_width_ratios": [
+        [
+          0.55,
+          1.5
+        ],
+        [
+          0.4,
+          1.4
+        ],
+        [
+          0.55,
+          1.5
+        ]
+      ],
+      "switchback_width_ratios": [
+        [
+          0.65,
+          1.4
+        ],
+        [
+          0.5,
+          1.3
+        ],
+        [
+          0.65,
+          1.4
+        ]
+      ],
+      "platform_hole_size_fraction": [
+        [
+          0.25,
+          0.55
+        ],
+        [
+          0.25,
+          0.55
+        ]
+      ],
+      "platform_hole_offset_fraction": [
+        [
+          -0.1,
+          0.1
+        ],
+        [
+          -0.08,
+          0.08
+        ]
+      ]
+    },
+    "integer": {
+      "open_stair_steps": [
+        12,
+        22
+      ],
+      "switchback_steps_per_flight": [
+        6,
+        12
+      ],
+      "spiral_steps": [
+        24,
+        36
+      ],
+      "solid_stair_steps": [
+        10,
+        16
+      ],
+      "obstacle_count": [
+        8,
+        16
+      ]
+    },
+    "choice": {
+      "platform_opening_mode": [
+        "solid",
+        "rectangle",
+        "ellipse",
+        "double_hole",
+        "notch"
+      ]
+    }
+  }
+}

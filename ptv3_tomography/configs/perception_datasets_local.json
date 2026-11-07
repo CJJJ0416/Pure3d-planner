@@ -1,0 +1,11 @@
+{
+  "version": "single_frame_registry_v1",
+  "datasets": [
+    {
+      "id": "ramp_capture_130",
+      "building_id": "ramp_platform_side_20261103",
+      "split": "train",
+      "path": "../../../outputs/ptv3_tomography/review/relocated_lidar_v2"
+    }
+  ]
+}

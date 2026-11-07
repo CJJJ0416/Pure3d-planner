@@ -1,0 +1,10 @@
+outputs/
+.venv*/
+__pycache__/
+*.pyc
+*.pending
+*.egg-info/
+/tests/
+/test/
+/test_results/
+/test_result/

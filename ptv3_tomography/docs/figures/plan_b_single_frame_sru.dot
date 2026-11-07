@@ -1,0 +1,40 @@
+digraph PlanB {
+  graph [rankdir=TB, bgcolor="#111111", pad="0.32", nodesep="0.38", ranksep="0.50",
+    splines=ortho, outputorder=edgesfirst, dpi=140, fontname="Noto Sans CJK SC",
+    labelloc=t, labeljust=c,
+    label=<<FONT POINT-SIZE="25" COLOR="#83b9e7"><B>Plan B · 直接读取空间特征</B></FONT><BR/><FONT POINT-SIZE="13" COLOR="#92a4b4">当前帧感知 → 空间特征适配 → SRU</FONT>>];
+  node [shape=box, style="rounded,filled", fillcolor="#001a31", color="#283d4f",
+    fontcolor="#73b3e8", penwidth=1.45, fontname="Noto Sans CJK SC", fontsize=17,
+    margin="0.25,0.12", width=3.9];
+  edge [color="#909090", penwidth=1.45, arrowsize=0.8];
+
+  lidar [label=<<B>当前帧 LiDAR 点云</B><BR/><FONT POINT-SIZE="12" COLOR="#9bb4c9">当前雷达坐标系 · 有效点</FONT>>];
+  encoder [label=<<B>预训练 PTv3</B><BR/><FONT POINT-SIZE="12" COLOR="#9bb4c9">导航阶段参数冻结</FONT>>];
+  feature [label=<<B>当前空间特征 Fₜ</B><BR/><FONT POINT-SIZE="12" COLOR="#9bb4c9">带坐标的空间特征</FONT>>];
+  fuse [label=<<B>空间特征适配与状态融合</B><BR/><FONT POINT-SIZE="12" COLOR="#9bb4c9">导航阶段可训练</FONT>>];
+  memory [label=<<B>SRU 时序记忆</B><BR/><FONT POINT-SIZE="12" COLOR="#9bb4c9">保留并更新状态 · 可训练</FONT>>];
+  actor [label=<<B>Actor 策略头</B><BR/><FONT POINT-SIZE="12" COLOR="#9bb4c9">导航阶段可训练</FONT>>];
+  velocity [label=<<B>速度指令</B><BR/><FONT POINT-SIZE="12" COLOR="#9bb4c9">vₓ · vᵧ · ω_z</FONT>>];
+
+  motion [label=<<B>运动信息</B><BR/><FONT POINT-SIZE="12" COLOR="#9bb4c9">相对雷达 odom + 时间差</FONT>>, width=3.15];
+  target [label=<<B>任务与机器人状态</B><BR/><FONT POINT-SIZE="12" COLOR="#9bb4c9">相对目标 + 当前状态</FONT>>, width=3.15];
+  previous [label=<<B>上一时刻 h、c</B>>, width=3.0];
+  next [label=<<B>当前 h、c</B><BR/><FONT POINT-SIZE="12" COLOR="#9bb4c9">传给下一时刻</FONT>>, width=3.0];
+  decoder [label=<<B>辅助预测头</B><BR/><FONT POINT-SIZE="12" COLOR="#9bb4c9">cost + 地面高度</FONT><BR/><FONT POINT-SIZE="12" COLOR="#9bb4c9">预训练 / 可选诊断</FONT>>,
+    fillcolor="#121f2a", color="#43586a", fontcolor="#91b8d7", style="rounded,filled,dashed", width=3.2];
+
+  lidar -> encoder -> feature -> fuse -> memory -> actor -> velocity;
+  {rank=same; feature; decoder;}
+  {rank=same; motion; fuse; target;}
+  {rank=same; previous; memory; next;}
+  feature -> decoder [style=dashed, color="#7d8892", constraint=false];
+  motion -> fuse [constraint=false];
+  target -> fuse [constraint=false];
+  previous -> memory [constraint=false];
+  memory -> next [constraint=false];
+  feature -> decoder [style=invis, weight=50];
+  motion -> fuse [style=invis, weight=100];
+  fuse -> target [style=invis, weight=100];
+  previous -> memory [style=invis, weight=100];
+  memory -> next [style=invis, weight=100];
+}

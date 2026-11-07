@@ -1,0 +1,4 @@
+# Kitless CUDA LiDAR collection. Isaac Sim, Isaac Lab and PyTorch are optional.
+numpy==1.26.4
+warp-lang==1.18.0
+trimesh>=4,<5

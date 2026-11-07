@@ -1,0 +1,38 @@
+digraph PlanA {
+  graph [rankdir=TB, bgcolor="#111111", pad="0.32", nodesep="0.38", ranksep="0.50",
+    splines=ortho, outputorder=edgesfirst, dpi=140, fontname="Noto Sans CJK SC",
+    labelloc=t, labeljust=c,
+    label=<<FONT POINT-SIZE="25" COLOR="#83b9e7"><B>Plan A · 显式预测地图</B></FONT><BR/><FONT POINT-SIZE="13" COLOR="#92a4b4">当前帧感知 → 预测地图 → 地图特征 → SRU</FONT>>];
+  node [shape=box, style="rounded,filled", fillcolor="#001a31", color="#283d4f",
+    fontcolor="#73b3e8", penwidth=1.45, fontname="Noto Sans CJK SC", fontsize=17,
+    margin="0.25,0.12", width=3.9];
+  edge [color="#909090", penwidth=1.45, arrowsize=0.8];
+
+  lidar [label=<<B>当前帧 LiDAR 点云</B><BR/><FONT POINT-SIZE="12" COLOR="#9bb4c9">当前雷达坐标系 · 有效点</FONT>>];
+  encoder [label=<<B>预训练 PTv3</B><BR/><FONT POINT-SIZE="12" COLOR="#9bb4c9">导航阶段参数冻结</FONT>>];
+  feature [label=<<B>当前空间特征 Fₜ</B><BR/><FONT POINT-SIZE="12" COLOR="#9bb4c9">带坐标的空间特征</FONT>>];
+  decoder [label=<<B>预测地图解码头</B><BR/><FONT POINT-SIZE="12" COLOR="#9bb4c9">预训练后冻结 · 导航时运行</FONT>>];
+  map [label=<<B>预测分层地图</B><BR/><FONT POINT-SIZE="12" COLOR="#9bb4c9">cost + 地面高度</FONT>>];
+  cnn [label=<<B>轻量地图 CNN</B><BR/><FONT POINT-SIZE="12" COLOR="#9bb4c9">提取地图中的空间结构 · 可训练</FONT>>];
+  fuse [label=<<B>地图特征与状态融合</B><BR/><FONT POINT-SIZE="12" COLOR="#9bb4c9">导航阶段可训练</FONT>>];
+  memory [label=<<B>SRU 时序记忆</B><BR/><FONT POINT-SIZE="12" COLOR="#9bb4c9">保留并更新状态 · 可训练</FONT>>];
+  actor [label=<<B>Actor 策略头</B><BR/><FONT POINT-SIZE="12" COLOR="#9bb4c9">导航阶段可训练</FONT>>];
+  velocity [label=<<B>速度指令</B><BR/><FONT POINT-SIZE="12" COLOR="#9bb4c9">vₓ · vᵧ · ω_z</FONT>>];
+
+  motion [label=<<B>运动信息</B><BR/><FONT POINT-SIZE="12" COLOR="#9bb4c9">相对雷达 odom + 时间差</FONT>>, width=3.15];
+  target [label=<<B>任务与机器人状态</B><BR/><FONT POINT-SIZE="12" COLOR="#9bb4c9">相对目标 + 当前状态</FONT>>, width=3.15];
+  previous [label=<<B>上一时刻 h、c</B>>, width=3.0];
+  next [label=<<B>当前 h、c</B><BR/><FONT POINT-SIZE="12" COLOR="#9bb4c9">传给下一时刻</FONT>>, width=3.0];
+
+  lidar -> encoder -> feature -> decoder -> map -> cnn -> fuse -> memory -> actor -> velocity;
+  {rank=same; motion; fuse; target;}
+  {rank=same; previous; memory; next;}
+  motion -> fuse [constraint=false];
+  target -> fuse [constraint=false];
+  previous -> memory [constraint=false];
+  memory -> next [constraint=false];
+  motion -> fuse [style=invis, weight=100];
+  fuse -> target [style=invis, weight=100];
+  previous -> memory [style=invis, weight=100];
+  memory -> next [style=invis, weight=100];
+}

@@ -1,0 +1,9 @@
+# Headless training and plotting dependencies for the existing server environment.
+numpy==1.26.4
+huggingface_hub>=0.25,<2
+setuptools>=68
+hatchling>=1.27
+editables>=0.3,<1
+matplotlib>=3.8,<4
+pillow>=10
+manifold3d>=3.5.4,<4

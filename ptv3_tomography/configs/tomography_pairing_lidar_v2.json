@@ -1,0 +1,22 @@
+{
+  "version": "mid360_lidar_reference_v2",
+  "grid_size_xy": [
+    64,
+    64
+  ],
+  "resolution_m": 0.1,
+  "height_bin_edges_m": [
+    -2.0,
+    -1.5,
+    -1.0,
+    -0.5,
+    0.0,
+    0.5,
+    1.0
+  ],
+  "history_frames": 1,
+  "cost_scale": 60.0,
+  "duplicate_height_tolerance_m": 0.001,
+  "support_label_policy": "unknown_no_supervision",
+  "supervision_policy": "native_vst_available_only"
+}
