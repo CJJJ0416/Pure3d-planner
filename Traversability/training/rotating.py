@@ -111,12 +111,14 @@ def train_epoch(head, optimizer, config, epoch, step, pool, history):
             write_json(output/'first_update.json', dict(epoch=epoch, step=step, true_batch=len(b['scene']),
                        conditions=b['conditions'].shape[1], loss=float(loss), gradients=gradients,
                        max_parameter_change=changes, tiny_in_optimizer=False,
+                       encoder_in_optimizer=False, encoder_name=config['encoder']['name'],
                        trainable_parameters=sum(p.numel() for p in head.parameters())))
         for name, value in parts.items():
             totals[name] += float(value.detach())
         if step % config['log_every_steps'] == 0:
             progress(config, 'training', completed_epochs=epoch-1, epoch=epoch, step=step,
-                     generation=pool['index'], generation_seeds=pool['seeds'], generations_total=10,
+                     generation=pool['index'], generation_seeds=pool['seeds'],
+                     generations_total=math.ceil((config.get('stop_epoch',config['epochs'])-config['start_epoch'])/config['rotation']['epochs_per_generation']),
                      batch=batch_number, batches_total=batches_total, updates_per_epoch=batches_total,
                      temporary_bytes=pool['temporary_bytes'], learning_rate=rate,
                      loss={k:v/batch_number for k,v in totals.items()}, last_validation=history[-1]['validation'])

@@ -1,6 +1,7 @@
 """Local full-3D cost training, one real resume, independent inference and report."""
 import argparse
 import hashlib
+import math
 import os
 from pathlib import Path
 import subprocess
@@ -13,16 +14,18 @@ from utils.pointcloud import ROOT, read_json, workspace_path, write_json
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--config',type=Path,default=ROOT/'Traversability/configs/full3d_tiny_rotating100.json')
+    parser.add_argument('--config',type=Path,default=ROOT/'Traversability/configs/full3d_small_frozen.json')
     args=parser.parse_args()
     config=read_json(args.config)
     target=config.get('stop_epoch',config['epochs'])
     output=workspace_path(config['output']); output.mkdir(parents=True,exist_ok=True)
-    source=workspace_path(config['source_run'])
+    source=workspace_path(config['source_run']) if config.get('source_run') else None
+    period=config['rotation']['epochs_per_generation']
     if not (output/'protocol.json').exists():
         write_json(output/'protocol.json',dict(config=config,status='running',
-            seed_plan=[dict(index=g,seeds=generation_seeds(config,g),first_epoch=1+10*g,last_epoch=10*(g+1)) for g in range(10)],
-            source_checkpoint_sha256={n:hashlib.sha256((source/n).read_bytes()).hexdigest() for n in ['best.pt','last.pt']},
+            seed_plan=[dict(index=g,seeds=generation_seeds(config,g),first_epoch=1+period*g,
+                last_epoch=min(target,period*(g+1))) for g in range(math.ceil(target/period))],
+            source_checkpoint_sha256={n:hashlib.sha256((source/n).read_bytes()).hexdigest() for n in ['best.pt','last.pt']} if source is not None else {},
             teacher_sha256=hashlib.sha256(workspace_path(config['teacher_config']).read_bytes()).hexdigest(),
             encoder_sha256=hashlib.sha256(workspace_path(config['encoder']['weights']).read_bytes()).hexdigest(),
             fixed_splits='Original XYZ, labels, conditions and core partitions. Newly encoded full3D feature caches.',
@@ -57,9 +60,11 @@ def main():
     run('independent_inference',config['neural_python'],'Traversability.inference.full3d',
         ['--checkpoint',output/'best.pt','--pcd',test['source_pcd'],'--condition','.5','.6','.4','.05',
          '--output',output/'independent_prediction'])
-    run('report',config['geometry_python'],'Traversability.visualization.full3d_report',['--run',output])
+    run('report',config['geometry_python'],config.get('report_module','Traversability.visualization.full3d_report'),['--run',output])
     protocol=read_json(output/'protocol.json')
-    assert all(hashlib.sha256((source/n).read_bytes()).hexdigest()==v for n,v in protocol['source_checkpoint_sha256'].items())
+    if source is not None:
+        assert all(hashlib.sha256((source/n).read_bytes()).hexdigest()==v for n,v in protocol['source_checkpoint_sha256'].items())
+    assert hashlib.sha256(workspace_path(config['encoder']['weights']).read_bytes()).hexdigest()==protocol['encoder_sha256']
     protocol.update(status='complete',completed_epochs=target,selected_epoch=summary['selected_epoch'])
     write_json(output/'protocol.json',protocol)
     execution.update(status='complete',stage='complete',finished=time.strftime('%Y-%m-%d %H:%M:%S'))

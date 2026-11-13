@@ -1,4 +1,4 @@
-"""A fresh 100-epoch head phase on complete 3-D frozen Tiny features."""
+"""Train conditional cost heads on complete 3-D frozen pretrained features."""
 import argparse
 from copy import deepcopy
 import gc
@@ -18,7 +18,7 @@ from Traversability.data.sliced import progress
 from Traversability.models.sliced import SlicedCostHead
 from Traversability.training.full3d_cache import cache_features
 from Traversability.training.rotating import random_state, restore_random, response_curves, train_epoch, phase_learning_rate
-from Traversability.training.sliced import evaluate
+from Traversability.training.sliced import evaluate, load_encoder
 from Traversability.training.train import save_checkpoint
 from utils.pointcloud import ROOT, read_json, workspace_path, write_json
 
@@ -28,7 +28,9 @@ def prepare_pool(config, generation, completed_epoch, validation):
     path = root/'generation.json'
     local = deepcopy(config)
     local['progress_context'] = dict(completed_epochs=completed_epoch, generation=generation,
-        generation_seeds=generation_seeds(config,generation), generations_total=10, last_validation=validation)
+        generation_seeds=generation_seeds(config,generation),
+        generations_total=math.ceil(config.get('stop_epoch',config['epochs'])/config['rotation']['epochs_per_generation']),
+        last_validation=validation)
     write_json(output/'active_config.json', local)
     current = read_json(path) if path.exists() else None
     if current is None or current['index']!=generation or not current['prepared']:
@@ -50,18 +52,33 @@ def prepare_pool(config, generation, completed_epoch, validation):
 
 
 def train(config, resume=False, stop_after_epoch=None):
-    output,root,source = (workspace_path(config[k]) for k in ['output','data','source_run'])
+    assert config['encoder']['frozen'], 'This entry point requires a frozen encoder'
+    output,root = (workspace_path(config[k]) for k in ['output','data'])
+    source = workspace_path(config['source_run']) if config.get('source_run') else None
     output.mkdir(parents=True,exist_ok=True)
     root.mkdir(parents=True,exist_ok=True)
     random.seed(config['seed']); np.random.seed(config['seed']); torch.manual_seed(config['seed'])
     write_json(output/'config.json',config)
-    initial_state = torch.load(source/'best.pt',map_location='cpu',weights_only=False)
-    assert initial_state['epoch']==90
+    if source is not None:
+        initial_state = torch.load(source/'best.pt',map_location='cpu',weights_only=False)
+        assert initial_state['epoch']==90
+    else:
+        local = deepcopy(config)
+        local['device'] = 'cpu'
+        encoder = load_encoder(local)
+        assert encoder.feature_channels == config['encoder']['feature_channels'], 'Encoder feature width mismatch'
+        initial_state = dict(encoder={k:v.cpu().clone() for k,v in encoder.state_dict().items()},epoch=0)
+        del encoder
     encoder_state = initial_state['encoder']
     head = SlicedCostHead(config).to(config['device'])
+    if 'model' not in initial_state:
+        initial_state['model'] = {k:v.detach().cpu().clone() for k,v in head.state_dict().items()}
     optimizer = torch.optim.AdamW(head.parameters(),lr=config['minimum_learning_rate'],weight_decay=config['weight_decay'])
     if resume:
         state = torch.load(output/'last.pt',map_location='cpu',weights_only=False)
+        if 'initial_model' in state:
+            initial_state['model'] = state['initial_model']
+        assert all(torch.equal(v,state['encoder'][k]) for k,v in encoder_state.items()), 'Frozen pretrained encoder changed'
         head.load_state_dict(state['model'])
         optimizer.load_state_dict(state['optimizer'])
         restore_random(state['random_state'])
@@ -82,12 +99,14 @@ def train(config, resume=False, stop_after_epoch=None):
         encoding = cache_features(config)
         initial = evaluate(head,config,'val',output/'initial_validation_predictions')
         write_json(output/'initial_val.json',initial)
-        write_json(output/'baseline.json',dict(source_epoch=90,best_validation=initial,
-            old_sliced_validation=read_json(source/'summary.json')['best_validation'],
-            note='The full3D initialization is the selection baseline. Old sliced scores are reference only.'))
+        baseline = dict(source_epoch=initial_state['epoch'],best_validation=initial,
+            note='The full3D initialization is the selection baseline.')
+        if source is not None:
+            baseline['old_sliced_validation'] = read_json(source/'summary.json')['best_validation']
+        write_json(output/'baseline.json',baseline)
         write_json(output/'baseline_responses.json',response_curves(head,config,'val'))
         history,start,step,best_score = [],1,0,initial['score']
-        write_json(output/'resume_verification.json',dict(source_epoch=90,fresh_optimizer=True,
+        write_json(output/'resume_verification.json',dict(source_epoch=initial_state['epoch'],fresh_optimizer=True,
             optimizer_states_at_initialization=len(optimizer.state),initial_step=0,continuations=[]))
         print('FULL3D INITIAL VALIDATION',initial['cost_mae_raw'],initial['score'],flush=True)
     def payload(epoch,pool):
@@ -96,7 +115,9 @@ def train(config, resume=False, stop_after_epoch=None):
                 phase_start=0,phase_end=config['epochs'],epoch_progress=epoch,
                 learning_rate=optimizer.param_groups[0]['lr']),epoch=epoch,step=step,best_score=best_score,
             random_state=random_state(),generation=pool,conditions=config['condition_names'],
-            condition_scale=config['condition_scale'],source_checkpoint=str(source/'best.pt'),source_epoch=90,
+            condition_scale=config['condition_scale'],
+            source_checkpoint=str(source/'best.pt') if source is not None else config['encoder']['weights'],
+            source_epoch=initial_state['epoch'],initial_model=initial_state['model'],
             geometry_contract='Full PCD, true representatives at 5 cm, complete 3D contexts; native support queries; map metres')
     if not resume:
         save_checkpoint(output/'best.pt',payload(0,None))
@@ -122,7 +143,7 @@ def train(config, resume=False, stop_after_epoch=None):
         save_checkpoint(output/'last.pt',payload(epoch,pool))
         write_json(output/'history.json',history)
         progress(config,'training',completed_epochs=epoch,epoch=epoch,step=step,generation=generation,
-            generation_seeds=pool['seeds'],generations_total=10,loss=row['loss'],last_validation=validation,
+            generation_seeds=pool['seeds'],generations_total=generations,loss=row['loss'],last_validation=validation,
             best_score=best_score,temporary_bytes=pool['temporary_bytes'],learning_rate=row['learning_rate'])
         print(f'VALIDATION epoch={epoch} raw_MAE={validation["cost_mae_raw"]:.4f} score={validation["score"]:.6f}',flush=True)
         gc.collect()
@@ -138,9 +159,10 @@ def train(config, resume=False, stop_after_epoch=None):
     initial_test = evaluate(head,config,'test',output/'initial_predictions')
     write_json(output/'summary.json',dict(selected_epoch=selected['epoch'],completed_epochs=target,
         initial_validation=initial,best_validation=validation,test=test,initial_test=initial_test,
-        original_test=read_json(source/'summary.json')['test'],baseline=read_json(output/'baseline.json'),
+        original_test=read_json(source/'summary.json')['test'] if source is not None else None,
+        baseline=read_json(output/'baseline.json'),
         best_checkpoint=str(output/'best.pt'),last_checkpoint=str(output/'last.pt'),
-        training_s=time.perf_counter()-started,new_scenes=4*generations,generations=generations,
+        training_s=time.perf_counter()-started,new_scenes=config['rotation']['scenes_per_generation']*generations,generations=generations,
         scheduler_budget_epochs=config['epochs'],initial_best_retained=selected['epoch']==0))
     last = torch.load(output/'last.pt',map_location='cpu',weights_only=False)
     verification = dict(completed_epoch=last['epoch'],last_step=last['step'],selected_epoch=selected['epoch'],
@@ -152,7 +174,7 @@ def train(config, resume=False, stop_after_epoch=None):
         expected_step=sum(r['updates'] for r in history),final_learning_rate=last['optimizer']['param_groups'][0]['lr'],
         scenes_archived=len(list((output/'scene_archive').glob('scene_*'))),
         rotations_verified=len(list((output/'rotations').glob('*.json'))),
-        source_sha256=hashlib.sha256((source/'best.pt').read_bytes()).hexdigest())
+        source_sha256=hashlib.sha256((source/'best.pt' if source is not None else workspace_path(config['encoder']['weights'])).read_bytes()).hexdigest())
     assert verification['expected_epochs_complete'] and verification['encoder_weights_and_buffers_equal_source']
     assert verification['optimizer_steps']==[verification['expected_step']]
     assert math.isclose(verification['final_learning_rate'],phase_learning_rate(config,target))

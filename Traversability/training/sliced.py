@@ -22,7 +22,10 @@ from utils.pointcloud import read_json, write_json, workspace_path
 
 def load_encoder(config):
     spec = config['encoder']
-    encoder = ptv3.load(spec['name'], weights=workspace_path(spec['weights']),
+    weights = workspace_path(spec['weights'])
+    if spec.get('sha256'):
+        assert hashlib.sha256(weights.read_bytes()).hexdigest() == spec['sha256'], 'Pretrained weights SHA256 mismatch'
+    encoder = ptv3.load(spec['name'], weights=weights,
                         device=config['device'], head=False, precision='fp32', warmup=False).eval()
     encoder.requires_grad_(False)
     return encoder

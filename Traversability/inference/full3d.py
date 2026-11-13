@@ -1,4 +1,4 @@
-"""PCD geometry queries with complete 3D Tiny contexts and conditional cost."""
+"""PCD geometry queries with complete 3D pretrained-encoder contexts and conditional cost."""
 import argparse
 from pathlib import Path
 import subprocess
@@ -78,6 +78,7 @@ def predict(checkpoint, pcd, condition_values, output, state=None):
     report=dict(checkpoint=str(Path(checkpoint).resolve()),source_pcd=str(pcd),condition=condition_values,
         points=len(coord),raw_points=raw_count,geometry_points=len(points),architecture=state['architecture'],
         selected_epoch=state['epoch'],output_coordinates='native geometry support XYZ, map metres',
+        encoder=config['encoder']['name'],
         encoder_input='complete 3D PCD representative context, not Tomogram points',encoder_calls=len(metadata['blocks']),
         teacher_cost_computed=False,external_queries_used=False,cpu_kdtree_used=False,
         timing=dict(native_geometry_s=geometry_s,pcd_read_s=reading_s,gpu_voxel_s=voxel_s,

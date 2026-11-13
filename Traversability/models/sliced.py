@@ -7,7 +7,8 @@ class SlicedCostHead(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.conditioning = config['conditioning']
-        self.adapter = nn.Sequential(nn.Linear(486, 256), nn.LayerNorm(256), nn.GELU())
+        channels = config.get('encoder', {}).get('feature_channels', 486)
+        self.adapter = nn.Sequential(nn.Linear(channels, 256), nn.LayerNorm(256), nn.GELU())
         self.condition_head = nn.Sequential(nn.Linear(4, 64), nn.GELU(), nn.Linear(64, 512))
         inputs = 260 if self.conditioning == 'concat' else 256
         self.cost_head = nn.Sequential(nn.Linear(inputs, 128), nn.GELU(), nn.Linear(128, 64),

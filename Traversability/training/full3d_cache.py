@@ -106,7 +106,7 @@ def cache_scene(encoder, config, root, scene, rows, verify=False):
             tiny_voxel_index=tiny_index.cpu().numpy(), feature_row=back.cpu().numpy())
         np.save(dest/'context_source_index.npy', index.int().cpu().numpy())
         write_json(dest/'ready.json', dict(points=len(point_index), voxels=len(feature),
-            feature_channels=486, context_points=len(index), full3d_input=True,
+            feature_channels=feature.shape[1], context_points=len(index), full3d_input=True,
             query_points_inserted_into_encoder=False))
         write_s += clock()-tick
         core_queries += len(point_index)
@@ -134,10 +134,12 @@ def cache_features(config):
     root = workspace_path(config['data'])
     meta = read_json(root/'manifest.json')
     encoder = load_encoder(config)
+    assert encoder.feature_channels == config['encoder']['feature_channels'], 'Encoder feature width mismatch'
     reference = {k:v.cpu().clone() for k,v in encoder.state_dict().items()}
-    source = torch.load(workspace_path(config['source_run'])/'best.pt', map_location='cpu', weights_only=False)
-    assert all(torch.equal(v, source['encoder'][k]) for k,v in reference.items())
-    del source
+    if config.get('source_run'):
+        source = torch.load(workspace_path(config['source_run'])/'best.pt', map_location='cpu', weights_only=False)
+        assert all(torch.equal(v, source['encoder'][k]) for k,v in reference.items())
+        del source
     reports = []
     for scene in meta['scenes']:
         rows = [r for r in meta['blocks'] if r['scene']==scene['id']]
