@@ -1,0 +1,349 @@
+{
+  "status": "D0_D1_D2_implemented",
+  "version": "filter_local_10cm_v3",
+  "path_base": "workspace_root",
+  "dataset_root": "datasets/filter_local_10cm_v3",
+  "sources": [
+    {
+      "type": "procedural_wfc_terrain",
+      "generator": "common.geneator.filter_wfc.build_wfc_terrain",
+      "scene_config": "common/geneator/wfc_capability_dr.json"
+    }
+  ],
+  "sources_note": "Same native WFC template, domain randomization and multi-floor connections as Traversability, with identity-preserving corridor additions.",
+  "coordinate_frame": "map",
+  "units": "m",
+  "z_axis": "up",
+  "acquisition": {
+    "method": "mesh_surface_sampling_and_offline_array_augmentation",
+    "sample_once_per_geometry": true
+  },
+  "families": [
+    "stairs",
+    "floor",
+    "corridor",
+    "ramp",
+    "railing",
+    "ceiling_beam"
+  ],
+  "target_structures": [
+    "floor",
+    "wall",
+    "ceiling",
+    "stair",
+    "ramp",
+    "railing",
+    "column_beam",
+    "large_block_obstacle",
+    "stationary_person",
+    "stationary_furniture"
+  ],
+  "sampling": {
+    "candidate_spacing_m": 0.03,
+    "preserve_thin_structures": true,
+    "attributes": [
+      "source_point_id",
+      "source_face_id",
+      "instance_id",
+      "semantic_id",
+      "target_role",
+      "surface_normal"
+    ],
+    "surface": "exposed target geometry, with component identities retained through merging and sampling",
+    "voxel_m": 0.1,
+    "voxel_selection": "first original surface point per occupied voxel, with identity retained"
+  },
+  "splits": {
+    "group_key": "geometry_group_id",
+    "parent_building_inherits_group": true,
+    "families_assignment": "Whole WFC scene is the split unit. Structure families coexist within each scene.",
+    "train": {
+      "geometry_count": 4,
+      "seed_start": 821000
+    },
+    "val": {
+      "geometry_count": 1,
+      "seed_start": 822000
+    },
+    "test": {
+      "geometry_count": 1,
+      "seed_start": 823000
+    },
+    "variants_per_geometry": 4,
+    "fixed_augmentation_seeds": true
+  },
+  "window": {
+    "core_size_m": [
+      4.0,
+      4.0,
+      3.0
+    ],
+    "context_margin_m": 1.0,
+    "bounds_source": "augmented_input",
+    "unique_core_ownership": true,
+    "export_individual_pcd_boxes": false,
+    "training_unit": "rough_context_box",
+    "loss_scope": "core_points",
+    "coordinate_storage": "original_map_xyz"
+  },
+  "augmentations": {
+    "window_shift": true,
+    "nonuniform_subsampling": true,
+    "local_holes_and_stripe_dropout": true,
+    "jitter_std_m_range": [
+      0.0,
+      0.02
+    ],
+    "retention_probability_range": [
+      0.45,
+      0.95
+    ],
+    "hole_count": 3,
+    "hole_size_m_range": [
+      0.35,
+      0.85
+    ],
+    "stripe_width_m_range": [
+      0.12,
+      0.28
+    ],
+    "jitter_fraction": 0.55,
+    "fragment_semantic_ids": [
+      3,
+      1,
+      5,
+      3,
+      1
+    ],
+    "fragment_radius_m_range": [
+      0.35,
+      0.9
+    ],
+    "fragment_max_points": 12000,
+    "near_shift_m_range": [
+      0.01,
+      0.06
+    ],
+    "ghost_shift_m_range": [
+      0.4,
+      1.2
+    ],
+    "fragment_rotation_deg": 18.0,
+    "registration_trails": {
+      "semantic_ids": [
+        1,
+        3,
+        5
+      ],
+      "copies_range": [
+        8,
+        13
+      ],
+      "patch_radius_m_range": [
+        0.65,
+        1.2
+      ],
+      "max_patch_points": 1500,
+      "total_drift_m_range": [
+        0.2,
+        0.65
+      ],
+      "total_rotation_deg_range": [
+        2.0,
+        8.0
+      ],
+      "jitter_std_m": 0.003
+    },
+    "dynamic_trails": {
+      "semantic_ids": [
+        8,
+        9,
+        10
+      ],
+      "positions_range": [
+        8,
+        20
+      ],
+      "surface_fraction_range": [
+        0.3,
+        0.8
+      ],
+      "remove_entire_trajectory": true,
+      "path_types": [
+        "straight",
+        "curved"
+      ]
+    },
+    "disconnected_controls": {
+      "semantic_ids": [
+        3,
+        1,
+        5
+      ],
+      "radius_m_range": [
+        0.2,
+        0.35
+      ],
+      "gap_m": 0.25
+    }
+  },
+  "target": {
+    "type": "continuous_retention_coefficient",
+    "range": [
+      0.0,
+      1.0
+    ],
+    "formula": "0 for moving source, exp(-0.5 * (distance_to_static_mesh / sigma_m)**2) otherwise",
+    "sigma_m": 0.03,
+    "sigma_status": "initial_candidate",
+    "distance_reference": "building plus stationary objects, excluding moving actors",
+    "mesh_acceleration_structure": "build once per geometry and query final augmented coordinates in batches",
+    "target_relevance": {
+      "stationary_and_registration_sources": 1.0,
+      "moving_actor_sources": 0.0
+    },
+    "random_point_rule": "use final target surface distance, not random provenance alone",
+    "crop_rule": "cropping and deleted neighbors do not reduce the quality of remaining points",
+    "rigid_transform_rule": "transform input and clean reference together for global frame changes",
+    "target_metadata_is_model_input": false,
+    "query_threads": 8,
+    "query_batch_points": 262144
+  },
+  "geometric_features": {
+    "representative_voxel_m": 0.03,
+    "exclude_query_self": true,
+    "features": [
+      "mean_distance_k16_m",
+      "distance_k16_m",
+      "distance_k64_m",
+      "neighbor_count_r0_15m",
+      "neighbor_count_r0_5m",
+      "mean_distance16_over_distance64"
+    ],
+    "normalization_split": "train",
+    "mapping": "own geometric representative inverse, separate from encoder inverse"
+  },
+  "visualization": {
+    "overview_per_geometry": true,
+    "gt_per_variant": true,
+    "views": [
+      "rough",
+      "source_role",
+      "keep_target",
+      "filtered_gt"
+    ]
+  },
+  "real_transfer_pcd": "datasets/rot_stairs/raw.pcd",
+  "real_transfer_has_complete_gt": false,
+  "generation": {
+    "component": "wfc_terrain",
+    "scene_config": "common/geneator/wfc_capability_dr.json",
+    "corridors": {
+      "per_floor": 1,
+      "length_cells_range": [
+        3,
+        6
+      ],
+      "width_m_range": [
+        1.2,
+        1.8
+      ],
+      "height_m_range": [
+        2.1,
+        2.35
+      ],
+      "wall_thickness_m": 0.12,
+      "door_width_m": 0.95,
+      "door_height_m": 1.95
+    },
+    "object_randomization": true
+  },
+  "batches": [
+    {
+      "id": "batch_00",
+      "split": "train",
+      "seeds": [
+        821000,
+        821001
+      ]
+    },
+    {
+      "id": "batch_01",
+      "split": "train",
+      "seeds": [
+        821002,
+        821003
+      ]
+    },
+    {
+      "id": "batch_02",
+      "split": "val",
+      "seeds": [
+        822000
+      ]
+    },
+    {
+      "id": "batch_03",
+      "split": "test",
+      "seeds": [
+        823000
+      ]
+    }
+  ],
+  "task": "offline_fused_xyz_trail_removal",
+  "model_input_fields": [
+    "x",
+    "y",
+    "z"
+  ],
+  "variants": [
+    {
+      "name": "static_control",
+      "dynamic": false,
+      "registration": false
+    },
+    {
+      "name": "dynamic_only",
+      "dynamic": true,
+      "registration": false
+    },
+    {
+      "name": "registration_only",
+      "dynamic": false,
+      "registration": true
+    },
+    {
+      "name": "mixed",
+      "dynamic": true,
+      "registration": true
+    }
+  ],
+  "test_suites": [
+    {
+      "name": "nominal",
+      "seed": 0
+    },
+    {
+      "name": "sparse",
+      "seed": 1,
+      "retention_probability_range": [
+        0.25,
+        0.45
+      ],
+      "hole_size_m_range": [
+        0.7,
+        1.2
+      ]
+    },
+    {
+      "name": "few_positions",
+      "seed": 2,
+      "positions_range": [
+        3,
+        7
+      ]
+    }
+  ],
+  "generation_unit": "direct_local_component",
+  "input_voxel_m": 0.1
+}

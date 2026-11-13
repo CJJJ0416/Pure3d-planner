@@ -1,0 +1,87 @@
+{
+  "_comment": "从当前best.pt微调。独立随机宽深高直梯，真实VST条件包。旧大地图仅作回归。",
+  "data": "datasets/wfc_wide_stair_v2",
+  "output": "runs/cost_wide_stair_v2",
+  "initial_checkpoint": "runs/traversability/best.pt",
+  "replay_data": "datasets/wfc_capability_dr_v2",
+  "retention_data": "datasets/wfc_wide_stair_v2/retention",
+  "regression_data": "datasets/wfc_regression_20261127",
+  "geometry_python": "/home/cjh/glocal2-nav/.venv/bin/python",
+  "seed": 20263300,
+  "splits": {
+    "train": 24,
+    "val": 6,
+    "test": 6
+  },
+  "focused_fraction": 0.5,
+  "focused_geometry": {
+    "riser_m": [
+      0.34,
+      0.425
+    ],
+    "tread_depth_m": [
+      0.5,
+      0.75
+    ],
+    "width_m": [
+      1.2,
+      1.7
+    ]
+  },
+  "broad_geometry": {
+    "riser_m": [
+      0.16,
+      0.44
+    ],
+    "tread_depth_m": [
+      0.18,
+      0.85
+    ],
+    "width_m": [
+      0.55,
+      2.0
+    ]
+  },
+  "target_dimensions": {
+    "riser_m": 0.38392450193442346,
+    "tread_depth_m": 0.6173710242845201,
+    "width_m": 1.4417623716792434
+  },
+  "side_gap_m": [
+    1.0,
+    2.1
+  ],
+  "condition_ranges": [
+    [
+      0.2,
+      1.0
+    ],
+    [
+      0.18,
+      0.7
+    ],
+    [
+      0.08,
+      0.55
+    ],
+    [
+      0.02,
+      0.5
+    ]
+  ],
+  "training_banks": 2,
+  "training": {
+    "epochs": 30,
+    "batch_size": 2,
+    "blocks_per_epoch": 342,
+    "stair_blocks": 240,
+    "num_workers": 2,
+    "cpu_threads": 4,
+    "amp": "bf16",
+    "freeze_encoder_epochs": 2,
+    "learning_rate": 5e-05,
+    "encoder_learning_rate": 5e-06,
+    "evaluation_every_epochs": 5,
+    "condition_difference_weight": 1.0
+  }
+}

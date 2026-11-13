@@ -1,0 +1,78 @@
+{
+  "version": "filter_scoring_voxel_20261113",
+  "dataset_root": "datasets/filter_scoring_voxel_20261113",
+  "base_config": "Filter/configs/dataset.json",
+  "surface_spacing_m": 0.03,
+  "window": {
+    "core_size_m": [
+      4.0,
+      4.0,
+      3.0
+    ],
+    "context_margin_m": 1.0,
+    "grid_shift_m": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "export_individual_pcd_boxes": false
+  },
+  "scenes": [
+    {
+      "seed": 821100,
+      "split": "train",
+      "kind": "straight_railed"
+    },
+    {
+      "seed": 821101,
+      "split": "train",
+      "kind": "switchback"
+    },
+    {
+      "seed": 821102,
+      "split": "train",
+      "kind": "spiral"
+    },
+    {
+      "seed": 821103,
+      "split": "train",
+      "kind": "corridor"
+    },
+    {
+      "seed": 822100,
+      "split": "val",
+      "kind": "straight_railed"
+    },
+    {
+      "seed": 823100,
+      "split": "test",
+      "kind": "landing"
+    }
+  ],
+  "variants": [
+    {
+      "name": "clean_static",
+      "floating_fraction": 0.0,
+      "short_trail": false,
+      "dynamic": false
+    },
+    {
+      "name": "sparse_floating",
+      "floating_fraction": 0.005,
+      "short_trail": false,
+      "dynamic": false
+    },
+    {
+      "name": "floating_and_short_trail",
+      "floating_fraction": 0.01,
+      "short_trail": true,
+      "dynamic": false
+    },
+    {
+      "name": "floating_and_minor_motion",
+      "floating_fraction": 0.012,
+      "short_trail": false,
+      "dynamic": true
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+# Keep upstream sensor/template formatting and runtime asset bytes intact.
+common/Mid360_imu_sim/** -whitespace
+common/geneator/terrain-generator/** -whitespace
+common/Mid360_imu_sim/scan_mode/*.csv binary
+common/Mid360_imu_sim/meshes/*.dae binary

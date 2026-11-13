@@ -1,0 +1,92 @@
+Panels:
+- Class: rviz_common/Displays
+  Name: Displays
+- Class: rviz_common/Views
+  Name: Views
+Visualization Manager:
+  Class: ''
+  Enabled: true
+  Displays:
+  - Class: rviz_default_plugins/PointCloud2
+    Name: SCAN - Faster LIO - magenta
+    Enabled: true
+    Value: true
+    Alpha: 0.7
+    Position Transformer: XYZ
+    Color Transformer: FlatColor
+    Color: 235; 75; 205
+    Channel Name: keep_target
+    Autocompute Intensity Bounds: false
+    Min Intensity: 0.0
+    Max Intensity: 1.0
+    Use rainbow: false
+    Min Color: 230; 40; 40
+    Max Color: 30; 180; 90
+    Style: Points
+    Size (Pixels): 1
+    Size (m): 0.085
+    Decay Time: 0
+    Use Fixed Frame: true
+    Selectable: false
+    Topic:
+      Value: /pure3d/scanning/rough
+      Depth: 1
+      History Policy: Keep Last
+      Reliability Policy: Reliable
+      Durability Policy: Transient Local
+      Filter size: 10
+  - Class: rviz_default_plugins/PointCloud2
+    Name: GT - Mesh sampled PCD - green
+    Enabled: true
+    Value: true
+    Alpha: 1.0
+    Position Transformer: XYZ
+    Color Transformer: FlatColor
+    Color: 60; 235; 125
+    Channel Name: keep_target
+    Autocompute Intensity Bounds: false
+    Min Intensity: 0.0
+    Max Intensity: 1.0
+    Use rainbow: false
+    Min Color: 230; 40; 40
+    Max Color: 30; 180; 90
+    Style: Points
+    Size (Pixels): 3
+    Size (m): 0.085
+    Decay Time: 0
+    Use Fixed Frame: true
+    Selectable: false
+    Topic:
+      Value: /pure3d/scanning/clean
+      Depth: 1
+      History Policy: Keep Last
+      Reliability Policy: Reliable
+      Durability Policy: Transient Local
+      Filter size: 10
+  Global Options:
+    Fixed Frame: map
+    Background Color: 24; 29; 38
+    Frame Rate: 30
+  Tools:
+  - Class: rviz_default_plugins/Interact
+  - Class: rviz_default_plugins/MoveCamera
+  - Class: rviz_default_plugins/Select
+  - Class: rviz_default_plugins/FocusCamera
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Name: SCAN and GT overlap
+      Distance: 11.0
+      Pitch: 0.55
+      Yaw: 0.8
+      Target Frame: <Fixed Frame>
+      Near Clip Distance: 0.01
+      Focal Point:
+        X: -0.5
+        Y: 0.3
+        Z: 1.0
+Window Geometry:
+  Width: 1440
+  Height: 980
+Preferences:
+  PromptSaveOnExit: false

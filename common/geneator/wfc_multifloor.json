@@ -1,0 +1,22 @@
+{
+  "seed": 20261107,
+  "output": "datasets/wfc_multifloor_v1/scene_20261107",
+  "shape": [12, 12],
+  "tile_dim_m": [2.0, 2.0, 2.0],
+  "floor_z_m": [0.0, 3.0, 6.0],
+  "floor_thickness_m": 0.1,
+  "terrain_relief_m": 0.8,
+  "roughness_m": 0.16,
+  "rough_grid": 16,
+  "atrium_rows": [4, 8],
+  "atrium_columns": [4, 8],
+  "top_floor_front_open_rows": 3,
+  "bridges": [
+    {"floor": 1, "row": 5, "columns": [4, 8]},
+    {"floor": 2, "row": 6, "columns": [4, 8]}
+  ],
+  "stairs": [
+    {"from_floor": 0, "to_floor": 1, "column": 2, "rows": [7, 10], "width_m": 1.8, "steps": 20},
+    {"from_floor": 1, "to_floor": 2, "column": 9, "rows": [2, 5], "width_m": 1.8, "steps": 20}
+  ]
+}

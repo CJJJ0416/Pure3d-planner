@@ -1,0 +1,37 @@
+{
+  "version": "recon_terrain_curriculum_v1",
+  "data": "datasets/recon_terrain_curriculum_v1",
+  "dataset_config": "Reconstruction/configs/dataset.json",
+  "output": "runs/recon_terrain_curriculum_v1",
+  "filter_checkpoint": "runs/filter_scoring_mesh_full_20261112/best.pt",
+  "filter_threshold": 0.2,
+  "device": "cuda:0",
+  "cpu_threads": 4,
+  "workers": 4,
+  "seed": 42,
+  "epochs": 50,
+  "amp": "bf16",
+  "batch_size": 1,
+  "learning_rate": 0.0001,
+  "weight_decay": 0.01,
+  "levels_m": [
+    0.24,
+    0.12,
+    0.06,
+    0.03,
+    0.015
+  ],
+  "queries_per_level": 4096,
+  "evaluate_every": 5,
+  "save_every_steps": 100,
+  "sample_steps": 16,
+  "surface_threshold": 0.5,
+  "expansion_threshold": 0.35,
+  "ae_gate": {
+    "precision_3cm": 0.9,
+    "complete_recall_3cm": 0.9
+  },
+  "vst_evaluation": true,
+  "loss_config": "Reconstruction/configs/loss.json",
+  "curriculum_config": "Reconstruction/configs/curriculum.json"
+}

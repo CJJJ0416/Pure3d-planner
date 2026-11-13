@@ -1,0 +1,60 @@
+{
+  "_comment": "本地训练配置（RTX 4060，小批量）；路径相对工作区根目录，由 train.py、forward.py 读取。",
+  "_field_notes": {
+    "data": "已准备好的数据集根目录（含 blocks.json）",
+    "output": "训练输出目录：权重、history.json、config.json",
+    "device": "训练设备",
+    "seed": "全局随机种子",
+    "epochs": "训练轮数",
+    "batch_size": "每个 batch 的块数",
+    "num_workers": "DataLoader 工作进程数",
+    "cpu_threads": "PyTorch CPU 线程数",
+    "amp": "混合精度：bf16/fp16/fp32",
+    "freeze_encoder_epochs": "前 N 个 epoch 冻结 PTv3 编码器",
+    "learning_rate": "查询/FiLM/代价头学习率",
+    "encoder_learning_rate": "编码器学习率",
+    "weight_decay": "AdamW 权重衰减",
+    "smooth_l1_beta": "SmoothL1 分段阈值",
+    "condition_difference_weight": "条件差异损失权重（0 表示关闭）",
+    "save_every_steps": "定期保存 last.pt 的步数间隔",
+    "log_every_steps": "打印训练日志的步数间隔",
+    "evaluation_split": "每个 epoch 结束后用于验证的划分",
+    "model": "模型结构与体素化参数"
+  },
+  "data": "datasets/wfc_capability_dr_stand_v3",
+  "output": "runs/cost_wfc_stand_local",
+  "device": "cuda:0",
+  "seed": 20261107,
+  "epochs": 50,
+  "batch_size": 2,
+  "num_workers": 2,
+  "cpu_threads": 4,
+  "amp": "bf16",
+  "freeze_encoder_epochs": 2,
+  "learning_rate": 0.001,
+  "encoder_learning_rate": 0.0001,
+  "weight_decay": 0.05,
+  "smooth_l1_beta": 0.1,
+  "condition_difference_weight": 1.0,
+  "save_every_steps": 100,
+  "log_every_steps": 20,
+  "evaluation_split": "val",
+  "model": {
+    "_comment": "学生四维条件：[clearance_min,slope_max,step_max,stand_ratio]；教师interval_free固定0.5m。",
+    "condition_names": [
+      "clearance_min",
+      "slope_max",
+      "step_max",
+      "stand_ratio"
+    ],
+    "fixed_teacher_conditions": {
+      "interval_free": 0.5
+    },
+    "encoder": "utonia_tiny",
+    "weights": null,
+    "voxel_size_m": 0.05,
+    "global_voxel_size_m": 0.5,
+    "width": 256,
+    "point_chunk_size": 4096
+  }
+}

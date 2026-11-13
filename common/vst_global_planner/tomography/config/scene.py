@@ -16,6 +16,7 @@ class SceneTrav():
     step_max = 0.20
     standable_ratio = 0.20
     cost_barrier = 50.0
+    adjust_cost_p = 2
 
     safe_margin = 0.4
     safe_margin_gamma=1

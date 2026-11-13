@@ -1,0 +1,22 @@
+{
+  "title": "R4受控拟合，只更新共享FiLM条件头",
+  "source_checkpoint": "runs/cost_all_stairs_dr_v3/best.pt",
+  "cache": "runs/planner/r4_stand_ratio_sweep_20261111",
+  "output": "runs/traversability/stand_ratio_film_r4_fit_20261111",
+  "geometry_python": "/home/cjh/glocal2-nav/.venv/bin/python",
+  "device": "cuda:0",
+  "seed": 20261111,
+  "steps": 1000,
+  "learning_rate": 0.00005,
+  "weight_decay": 0.05,
+  "amp": "bf16",
+  "cpu_threads": 4,
+  "smooth_l1_beta": 0.1,
+  "stand_difference_weight": 1.0,
+  "change_threshold": 0.02,
+  "train_ratios": [0.02, 0.05, 0.10, 0.20, 0.40, 0.50],
+  "validation_ratios": [0.08, 0.12, 0.30],
+  "baseline_ratio": 0.05,
+  "log_every_steps": 10,
+  "evaluate_every_steps": 50
+}

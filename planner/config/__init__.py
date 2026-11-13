@@ -1,1 +1,1 @@
-from .param import Config
+from .param import PlannerConfig

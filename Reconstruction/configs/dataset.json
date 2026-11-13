@@ -1,0 +1,63 @@
+{
+  "version": "recon_terrain_curriculum_v1",
+  "root": "datasets/recon_terrain_curriculum_v1",
+  "terrain_config": "Reconstruction/configs/terrain.json",
+  "terrains": [
+    {
+      "seed": 836100,
+      "folder": "datasets/recon_terrain_curriculum_v1/base/terrain_836100",
+      "split": "train"
+    },
+    {
+      "seed": 836101,
+      "folder": "datasets/recon_terrain_curriculum_v1/base/terrain_836101",
+      "split": "train"
+    },
+    {
+      "seed": 836102,
+      "folder": "datasets/recon_terrain_curriculum_v1/base/terrain_836102",
+      "split": "train"
+    },
+    {
+      "seed": 836103,
+      "folder": "datasets/recon_terrain_curriculum_v1/base/terrain_836103",
+      "split": "train"
+    },
+    {
+      "seed": 836200,
+      "folder": "datasets/recon_terrain_curriculum_v1/base/terrain_836200",
+      "split": "val"
+    },
+    {
+      "seed": 836300,
+      "folder": "datasets/recon_terrain_curriculum_v1/base/terrain_836300",
+      "split": "test"
+    }
+  ],
+  "block_size_m": [
+    4,
+    4,
+    3
+  ],
+  "context_m": 1.0,
+  "levels_m": [
+    0.24,
+    0.12,
+    0.06,
+    0.03,
+    0.015
+  ],
+  "near_surface_m": 0.24,
+  "filter_checkpoint": "runs/filter_scoring_mesh_full_20261112/best.pt",
+  "filter_threshold": 0.2,
+  "curriculum_config": "Reconstruction/configs/curriculum.json",
+  "coordinate_frame": "map",
+  "experiment_seed": 42,
+  "heldout_targets": {
+    "light": 0.035,
+    "medium": 0.15,
+    "heavy": 0.25
+  },
+  "representative_blocks": 8,
+  "selection_version": "half_open_anchor_v2"
+}

@@ -1,0 +1,90 @@
+{
+  "architecture": "full3d_tiny_cost_v1",
+  "seed": 2026111400,
+  "source_run": "runs/traversability/cost_sliced_tiny_rotating100_20261113",
+  "fixed_data": "datasets/cost_sliced_tiny_local50_20261113",
+  "data": "datasets/cost_full3d_tiny_rotating100_20261113",
+  "output": "runs/traversability/cost_full3d_tiny_rotating100_20261113",
+  "generator_config": "common/geneator/wfc_capability_dr.json",
+  "generator_python": "/home/cjh/miniconda3/envs/pure3d-ptv3/bin/python",
+  "geometry_python": "/home/cjh/glocal2-nav/.venv/bin/python",
+  "neural_python": "/home/cjh/miniconda3/envs/pure3d-ptv3/bin/python",
+  "teacher_config": "common/vst_global_planner/configs/teacher_building.json",
+  "condition_names": [
+    "clearance_min",
+    "slope_max",
+    "step_max",
+    "stand_ratio"
+  ],
+  "condition_scale": [
+    1.0,
+    0.5,
+    0.3,
+    1.0
+  ],
+  "condition_ranges": [
+    [
+      0.2,
+      1.0
+    ],
+    [
+      0.18,
+      0.7
+    ],
+    [
+      0.08,
+      0.55
+    ],
+    [
+      0.02,
+      0.5
+    ]
+  ],
+  "encoder": {
+    "name": "utonia_tiny",
+    "weights": "/home/cjh/.cache/huggingface/hub/models--Pointcept--Utonia/snapshots/9457f025e36c7001ee962a542f0d27a5b600e1e7/utonia_tiny.pth",
+    "grid_size": 0.01,
+    "scale": 0.5,
+    "precision": "bf16",
+    "feature_channels": 486,
+    "frozen": true
+  },
+  "window": {
+    "core_size_m": [
+      4.0,
+      4.0,
+      3.0
+    ],
+    "context_m": 1.0
+  },
+  "rotation": {
+    "scenes_per_generation": 4,
+    "epochs_per_generation": 10,
+    "seed_start": 2026111400,
+    "surface_spacing_m": 0.03
+  },
+  "device": "cuda:0",
+  "cpu_threads": 4,
+  "batch_size": 2,
+  "num_workers": 2,
+  "start_epoch": 0,
+  "epochs": 100,
+  "learning_rate": 0.0001,
+  "minimum_learning_rate": 1e-06,
+  "warmup_fraction": 0.05,
+  "weight_decay": 0.05,
+  "smooth_l1_beta": 0.1,
+  "condition_difference_weight": 2.0,
+  "parameter_weights": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+  ],
+  "change_threshold": 0.02,
+  "region_balanced": true,
+  "conditioning": "film",
+  "log_every_steps": 20,
+  "geometry_voxel_size_m": 0.05,
+  "stop_epoch": 50
+}

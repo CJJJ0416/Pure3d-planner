@@ -1,0 +1,84 @@
+{
+  "_comment": "数据生成与分块配置；所有路径均相对工作区根目录，由 generate.py、overview.py、blocks.py 读取。",
+  "_field_notes": {
+    "output": "数据集输出目录：场景、教师监督、块索引与 manifest 都写在这里",
+    "scene_config": "WFC 多层场景模板配置路径",
+    "robots": "教师五维条件配置；学生使用四维，interval_free固定在教师侧",
+    "teacher_config": "VST 原生教师参数配置路径",
+    "surface_spacing_m": "网格转 PCD 时的表面采样间距（米）",
+    "voxel_m": "输入建筑 PCD 的体素降采样尺寸（米）",
+    "blocks": "空间分块参数：核心块、上下文、粗几何体素与查询近邻数",
+    "batches": "批次与数据划分：id/split/seeds，每个 seed 生成一个场景"
+  },
+  "output": "datasets/wfc_response_paired_v4",
+  "scene_config": "common/geneator/wfc_response_dr.json",
+  "robots": "Traversability/configs/robots_response.json",
+  "teacher_config": "common/vst_global_planner/configs/teacher_building.json",
+  "surface_spacing_m": 0.03,
+  "voxel_m": 0.05,
+  "blocks": {
+    "_comment": "核心块 6x6x4 m，上下文 1.5 m；全楼粗几何体素 0.5 m；查询点局部/全局近邻数 K=8/4。",
+    "core_size_m": [
+      6.0,
+      6.0,
+      4.0
+    ],
+    "context_m": [
+      1.5,
+      1.5,
+      1.5
+    ],
+    "global_voxel_m": 0.5,
+    "query_neighbors": {
+      "local_k": 8,
+      "global_k": 4
+    }
+  },
+  "batches": [
+    {
+      "id": "batch_00",
+      "split": "train",
+      "seeds": [
+        20261109,
+        20261110
+      ]
+    },
+    {
+      "id": "batch_01",
+      "split": "train",
+      "seeds": [
+        20261111,
+        20261112
+      ]
+    },
+    {
+      "id": "batch_02",
+      "split": "val",
+      "seeds": [
+        20261113
+      ]
+    },
+    {
+      "id": "batch_02",
+      "split": "test",
+      "seeds": [
+        20261114
+      ]
+    },
+    {
+      "id": "batch_03",
+      "split": "test",
+      "seeds": [
+        20261127
+      ]
+    },
+    {
+      "id": "response_extra",
+      "split": "train",
+      "seeds": [
+        20261130,
+        20261131
+      ]
+    }
+  ]
+}

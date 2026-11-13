@@ -22,6 +22,7 @@ class Tomogram(object):
         self.step_cross = cfg.trav.step_max
         self.standable_th = int(cfg.trav.standable_ratio * (2 * self.half_trav_k_size + 1) ** 2) - 1
         self.cost_barrier = float(cfg.trav.cost_barrier)
+        self.adjust_cost_p = cfg.trav.adjust_cost_p
         self.safe_margin = cfg.trav.safe_margin
         self.safe_margin_gamma = cfg.trav.safe_margin_gamma
         self.inflation = cfg.trav.inflation
@@ -163,7 +164,7 @@ class Tomogram(object):
             self.safe_margin,
             self.cost_barrier,
             self.resolution,
-            p=2              # ← 可在这里改默认陡峭度，或后面动态改
+            p=self.adjust_cost_p
         )
 
         # 新增：计算到骨架点的距离（w_local）

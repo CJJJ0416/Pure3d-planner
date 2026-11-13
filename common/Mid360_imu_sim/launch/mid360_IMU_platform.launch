@@ -1,0 +1,42 @@
+<?xml version="1.0" ?>
+<!-- 用途：保留的 ROS1 MID360 + IMU 独立平台示例，使用 roslaunch/ROS1 参数服务器语法。
+     当前 ROS2 A1 仿真通过机器人 xacro 加载传感器；此文件不是 ROS2 主入口。
+     以下 $(find livox_laser_simulation) 路径沿用原 ROS1 包名。 -->
+<launch>
+  <!-- <arg name="world" default="$(find livox_laser_simulation)/worlds/standardrobots_factory.world" /> -->
+  <!-- Gazebo 开关：paused 控制初始暂停，use_sim_time 使用仿真时钟，gui/headless 控制显示；debug/verbose 控制调试。 -->
+  <arg name="paused" default="false"/>
+  <arg name="use_sim_time" default="true"/>
+  <arg name="gui" default="true"/>
+  <arg name="headless" default="false"/>
+  <arg name="debug" default="false"/>
+  <arg name="verbose" default="false"/>
+
+  <!-- 包含 ROS1 Gazebo 空世界入口，并传递上述参数；world_name 当前仍处于注释状态。 -->
+  <!-- Start gazebo and load the world -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch" >
+    <!-- <arg name="world_name" value="$(arg world)"/>  -->
+    <arg name="paused" value="$(arg paused)"/>
+    <arg name="use_sim_time" value="$(arg use_sim_time)"/>
+    <arg name="gui" value="$(arg gui)"/>
+    <arg name="headless" value="$(arg headless)"/>
+    <arg name="debug" value="$(arg debug)"/>
+    <arg name="verbose" value="$(arg verbose)"/>
+  </include>
+  <!-- 用 xacro 生成含 MID360/IMU 的平台 URDF，写入 robot_description 参数。 -->
+  <!-- Spawn the platform -->
+  <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find livox_laser_simulation)/urdf/mid360_IMU_platform.xacro' " />
+
+  <!-- spawn_model 从参数服务器读取 URDF，在 Gazebo 中创建名为 example 的模型。 -->
+  <node pkg="gazebo_ros" type="spawn_model" name="spawn_model" args="-urdf -param /robot_description -model example"/>
+
+  <!-- 以 30 Hz 发布模型各连杆 TF，便于传感器坐标转换与可视化。 -->
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
+    <param name="publish_frequency" type="double" value="30.0" />
+  </node>
+
+  <!-- 下方 RViz 入口保留为注释，默认不会启动可视化窗口。 -->
+  <!-- RViz -->
+  <!-- <arg name="rviz" default="true"/>
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find livox_laser_simulation)/rviz/livox_simulation.rviz"/> -->
+</launch>

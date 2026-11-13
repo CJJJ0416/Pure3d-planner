@@ -1,0 +1,204 @@
+Panels:
+- Class: rviz_common/Displays
+  Name: Displays
+- Class: rviz_common/Views
+  Name: Views
+Visualization Manager:
+  Class: ''
+  Enabled: true
+  Displays:
+  - Class: rviz_default_plugins/PointCloud2
+    Name: LIO continuous GT
+    Enabled: true
+    Value: true
+    Alpha: 1.0
+    Position Transformer: XYZ
+    Color Transformer: Intensity
+    Color: 150; 170; 190
+    Channel Name: keep_target
+    Autocompute Intensity Bounds: false
+    Min Intensity: 0.0
+    Max Intensity: 1.0
+    Use rainbow: false
+    Min Color: 230; 40; 40
+    Max Color: 30; 180; 90
+    Style: Points
+    Size (Pixels): 1
+    Size (m): 0.085
+    Decay Time: 0
+    Use Fixed Frame: true
+    Selectable: false
+    Topic:
+      Value: /pure3d/scanning/rough
+      Depth: 1
+      History Policy: Keep Last
+      Reliability Policy: Reliable
+      Durability Policy: Transient Local
+      Filter size: 10
+  - Class: rviz_default_plugins/PointCloud2
+    Name: Truth-pose fusion
+    Enabled: false
+    Value: false
+    Alpha: 1.0
+    Position Transformer: XYZ
+    Color Transformer: Intensity
+    Color: 150; 170; 190
+    Channel Name: keep_target
+    Autocompute Intensity Bounds: false
+    Min Intensity: 0.0
+    Max Intensity: 1.0
+    Use rainbow: false
+    Min Color: 230; 40; 40
+    Max Color: 30; 180; 90
+    Style: Points
+    Size (Pixels): 1
+    Size (m): 0.085
+    Decay Time: 0
+    Use Fixed Frame: true
+    Selectable: false
+    Topic:
+      Value: /pure3d/scanning/truth_fused
+      Depth: 1
+      History Policy: Keep Last
+      Reliability Policy: Reliable
+      Durability Policy: Transient Local
+      Filter size: 10
+  - Class: rviz_default_plugins/PointCloud2
+    Name: Mesh sampled GT
+    Enabled: false
+    Value: false
+    Alpha: 1.0
+    Position Transformer: XYZ
+    Color Transformer: Intensity
+    Color: 150; 170; 190
+    Channel Name: keep_target
+    Autocompute Intensity Bounds: false
+    Min Intensity: 0.0
+    Max Intensity: 1.0
+    Use rainbow: false
+    Min Color: 230; 40; 40
+    Max Color: 30; 180; 90
+    Style: Points
+    Size (Pixels): 1
+    Size (m): 0.085
+    Decay Time: 0
+    Use Fixed Frame: true
+    Selectable: false
+    Topic:
+      Value: /pure3d/scanning/clean
+      Depth: 1
+      History Policy: Keep Last
+      Reliability Policy: Reliable
+      Durability Policy: Transient Local
+      Filter size: 10
+  - Class: rviz_default_plugins/PointCloud2
+    Name: Dynamic returns
+    Enabled: false
+    Value: false
+    Alpha: 1.0
+    Position Transformer: XYZ
+    Color Transformer: Intensity
+    Color: 150; 170; 190
+    Channel Name: keep_target
+    Autocompute Intensity Bounds: false
+    Min Intensity: 0.0
+    Max Intensity: 1.0
+    Use rainbow: false
+    Min Color: 230; 40; 40
+    Max Color: 30; 180; 90
+    Style: Points
+    Size (Pixels): 1
+    Size (m): 0.085
+    Decay Time: 0
+    Use Fixed Frame: true
+    Selectable: false
+    Topic:
+      Value: /pure3d/scanning/dynamic
+      Depth: 1
+      History Policy: Keep Last
+      Reliability Policy: Reliable
+      Durability Policy: Transient Local
+      Filter size: 10
+  - Class: rviz_default_plugins/PointCloud2
+    Name: Mixed edge returns
+    Enabled: false
+    Value: false
+    Alpha: 1.0
+    Position Transformer: XYZ
+    Color Transformer: Intensity
+    Color: 150; 170; 190
+    Channel Name: keep_target
+    Autocompute Intensity Bounds: false
+    Min Intensity: 0.0
+    Max Intensity: 1.0
+    Use rainbow: false
+    Min Color: 230; 40; 40
+    Max Color: 30; 180; 90
+    Style: Points
+    Size (Pixels): 1
+    Size (m): 0.085
+    Decay Time: 0
+    Use Fixed Frame: true
+    Selectable: false
+    Topic:
+      Value: /pure3d/scanning/edge_returns
+      Depth: 1
+      History Policy: Keep Last
+      Reliability Policy: Reliable
+      Durability Policy: Transient Local
+      Filter size: 10
+  - Class: rviz_default_plugins/PointCloud2
+    Name: Static controls
+    Enabled: false
+    Value: false
+    Alpha: 1.0
+    Position Transformer: XYZ
+    Color Transformer: Intensity
+    Color: 150; 170; 190
+    Channel Name: keep_target
+    Autocompute Intensity Bounds: false
+    Min Intensity: 0.0
+    Max Intensity: 1.0
+    Use rainbow: false
+    Min Color: 230; 40; 40
+    Max Color: 30; 180; 90
+    Style: Points
+    Size (Pixels): 1
+    Size (m): 0.085
+    Decay Time: 0
+    Use Fixed Frame: true
+    Selectable: false
+    Topic:
+      Value: /pure3d/scanning/static_controls
+      Depth: 1
+      History Policy: Keep Last
+      Reliability Policy: Reliable
+      Durability Policy: Transient Local
+      Filter size: 10
+  Global Options:
+    Fixed Frame: map
+    Background Color: 24; 29; 38
+    Frame Rate: 30
+  Tools:
+  - Class: rviz_default_plugins/Interact
+  - Class: rviz_default_plugins/MoveCamera
+  - Class: rviz_default_plugins/Select
+  - Class: rviz_default_plugins/FocusCamera
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Name: Incremental scan scene
+      Distance: 13.5
+      Pitch: 0.6
+      Yaw: 0.8
+      Target Frame: <Fixed Frame>
+      Near Clip Distance: 0.01
+      Focal Point:
+        X: 0.0
+        Y: 0.6
+        Z: 1.0
+Window Geometry:
+  Width: 1440
+  Height: 980
+Preferences:
+  PromptSaveOnExit: false

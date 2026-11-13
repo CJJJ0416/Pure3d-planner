@@ -1,0 +1,61 @@
+{
+  "version": "recon_terrain_blocks_preview_v1",
+  "root": "datasets/recon_terrain_blocks_preview_v1",
+  "terrain_seed": 835012,
+  "generation": {
+    "component": "wfc_terrain",
+    "scene_config": "common/geneator/wfc_capability_dr.json",
+    "corridors": {
+      "per_floor": 1,
+      "length_cells_range": [
+        3,
+        6
+      ],
+      "width_m_range": [
+        1.2,
+        1.8
+      ],
+      "height_m_range": [
+        2.1,
+        2.35
+      ],
+      "wall_thickness_m": 0.12,
+      "door_width_m": 0.95,
+      "door_height_m": 1.95
+    },
+    "object_randomization": true
+  },
+  "surface_spacing_m": 0.02,
+  "block_size_m": [
+    4.0,
+    4.0,
+    3.0
+  ],
+  "context_m": 1.0,
+  "preview_blocks": 6,
+  "training": false,
+  "subtraction": {
+    "light_regions": [
+      12,
+      20
+    ],
+    "heavy_regions": [
+      32,
+      48
+    ],
+    "scale_m": [
+      0.1,
+      0.6
+    ],
+    "large_scale_m": [
+      0.6,
+      1.0
+    ],
+    "large_probability": 0.1,
+    "irregularity": 0.38,
+    "band_width_m": [
+      0.02,
+      0.08
+    ]
+  }
+}

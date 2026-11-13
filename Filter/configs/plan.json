@@ -1,0 +1,123 @@
+{
+  "status": "trained_and_archived",
+  "version": "filter_scoring_no_knn_20261113",
+  "date": "2026-11-13",
+  "path_base": "workspace_root",
+  "module_root": "Filter",
+  "layout_matches": "Traversability",
+  "directories": [
+    "configs",
+    "data",
+    "models",
+    "training",
+    "inference",
+    "visualization",
+    "docs"
+  ],
+  "dataset_config": "Filter/configs/scoring_mesh_full.json",
+  "training_config": "Filter/configs/train_scoring_no_knn.json",
+  "documents": {
+    "architecture": "Filter/docs/ARCHITECTURE.md",
+    "data_contract": "Filter/docs/DATA_CONTRACT.md",
+    "training_plan": "Filter/docs/TRAINING_PLAN.md",
+    "literature": "Filter/docs/LITERATURE.md",
+    "data_preparation": "Filter/docs/DATA_PREPARATION.md",
+    "training_archive": "Filter/docs/TRAINING_ARCHIVE_20261112.md",
+    "workflow": "Filter/docs/TRAINING_WORKFLOW.md"
+  },
+  "implementation_status": {
+    "planning": "complete",
+    "data_preparation": "direct_local_components_implemented",
+    "feature_cache": "implemented",
+    "filter_model": "implemented",
+    "training_and_inference": "implemented",
+    "continuous_targets": "implemented"
+  },
+  "next_step": "Use the relative-only scorer as the frozen reference and improve the supervised dataset before new training.",
+  "reconstruction_interface": {
+    "plan": "Reconstruction/configs/plan.json",
+    "coordinate_frame": "map",
+    "units": "m",
+    "outputs": [
+      "keep_score",
+      "keep_indices",
+      "xyz_keep",
+      "shared_voxel_features",
+      "inverse",
+      "point_index",
+      "window_transform"
+    ],
+    "feature_channels": 486,
+    "feature_selection": "F_voxel[inverse[keep_indices]]",
+    "freeze_filter_before_reconstruction": true,
+    "reencode_filtered_pcd": false,
+    "status": "planned_not_implemented"
+  },
+  "implemented_entrypoints": {
+    "prepare": "Filter.data.local",
+    "generate_batches": "Filter.data.scoring",
+    "visualize": "Filter.visualization.visualize",
+    "export_boxes": "Filter.data.boxes",
+    "rviz": "Filter.visualization.rviz",
+    "features": "Filter.data.features",
+    "train": "Filter.training.train",
+    "evaluate": "Filter.training.evaluate",
+    "predict": "Filter.inference.predict",
+    "select_points": "Filter.inference.threshold"
+  },
+  "training_sample": "directly generated local component with context, core-only supervision",
+  "active_phase": {
+    "task": "offline_fused_pcd_trail_removal",
+    "deployment_input": "map-frame XYZ PCD boxes, no scan history assumed",
+    "deployment_output": "same-order XYZ plus keep_score, explicit threshold selection only",
+    "artifact_types": [
+      "sparse_floating_points",
+      "short_registration_ghosts",
+      "minor_dynamic_object_trails"
+    ],
+    "evaluate_artifact_types_separately": true,
+    "retain_static_objects_in_this_phase": true,
+    "general_semantic_decluttering": "later_phase",
+    "reference": {
+      "method": "DUFOMap",
+      "paper": "https://arxiv.org/html/2403.01449v2",
+      "official_code": "https://github.com/KTH-RPL/dufomap",
+      "original_input": "per-observation point clouds and sensor poses",
+      "possible_roles": [
+        "geometric_baseline_with_scan_history",
+        "pseudo_labels_with_scan_history"
+      ],
+      "student_is_dufomap_reimplementation": false
+    }
+  },
+  "trained_model": {
+    "checkpoint": "runs/filter_scoring_no_knn_20261113/best.pt",
+    "epoch": 34,
+    "step": 952,
+    "sha256": "27b417b904787aede5703e47f6ab96d6affa49d1a93f70bfa6ecb2d2da918d1a",
+    "threshold": null,
+    "run": "runs/filter_scoring_no_knn_20261113"
+  },
+  "reference_models": {
+    "knn_archive": {
+      "run": "runs/filter_scoring_mesh_full_20261112",
+      "checkpoint": "runs/filter_scoring_mesh_full_20261112/best.pt",
+      "epoch": 24,
+      "step": 672,
+      "sha256": "e258833d2e4149ce8503bb1ecbf8ace89c49b970be6cfc8430957f2e99163b90",
+      "threshold": null,
+      "user_requested_postprocessing_threshold": 0.2
+    }
+  },
+  "baseline_config": "Filter/configs/baseline.json",
+  "new_data_generation": {
+    "entrypoint": "common.scanning.pipeline",
+    "config": "common/scanning/config.json",
+    "teacher": "static Mesh triangle distance, dynamic-instance returns zero",
+    "model_input": "map-frame XYZ only",
+    "status": "lio_error pilot validated, not used for a new trained checkpoint",
+    "rays_per_scan": 10000,
+    "scan_hz": 10,
+    "imu_hz": 200
+  }
+}

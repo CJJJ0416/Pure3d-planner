@@ -1,0 +1,19 @@
+{
+  "version": "recon_terrain_curriculum_v1",
+  "status": "stopped_by_user",
+  "dataset": "Reconstruction/configs/dataset.json",
+  "training": "Reconstruction/configs/training.json",
+  "input": "continuous terrain -> global subtraction -> fixed core/context blocks",
+  "output": "retained XYZ + generated surface XYZ",
+  "encoder_passes_per_input_block": 1,
+  "semantic_conditioning": false,
+  "cost_feature_export": false,
+  "training_entry": "Reconstruction.experiments.run train",
+  "runtime_status": "runs/recon_terrain_curriculum_v1/status.json",
+  "replacement_schedule": [
+    10,
+    20,
+    35
+  ],
+  "training_started": true
+}

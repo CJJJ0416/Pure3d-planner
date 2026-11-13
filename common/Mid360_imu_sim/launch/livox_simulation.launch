@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<!-- 用途：保留的 ROS1 Livox 独立雷达示例，启动工厂世界、雷达模型与 RViz。
+     使用 ROS1 roslaunch 语法与原 livox_laser_simulation 包名；ROS2 A1 入口通过机器人 xacro 加载雷达。 -->
+<launch>
+  <!-- 可替换场景 world 与雷达 xacro 路径 livox_sensor；默认工厂世界和 MID360 模型。 -->
+  <arg name="world" default="$(find livox_laser_simulation)/worlds/standardrobots_factory.world" />
+  <arg name="livox_sensor" default="$(find livox_laser_simulation)/urdf/livox_mid360.xacro" />
+
+  <!-- 启动 ROS1 Gazebo：立即运行物理，使用仿真时钟，显示 GUI，并启用详细日志。 -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+	<arg name="world_name" value="$(arg world)"/> 
+  <arg name="paused" value="false"/> 
+  <arg name="use_sim_time" value="true"/>
+  <arg name="gui" value="true"/> 
+  <arg name="headless" value="false"/> 
+  <arg name="debug" value="false"/> <arg name="verbose" value="true"/>
+  </include>
+  
+  <!-- 展开雷达 xacro，将 URDF 保存到 ROS1 参数服务器的 sensor_description。 -->
+  <param name="sensor_description" command="$(find xacro)/xacro --inorder $(arg livox_sensor)" />
+  <!-- 从 sensor_description 生成名为 livox_lidar 的 Gazebo 实体。 -->
+  <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-urdf -model livox_lidar -param sensor_description" />
+  <!-- 使用原 Livox 配置显示雷达数据；这是 ROS1 rviz 节点。 -->
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find livox_laser_simulation)/rviz/livox_simulation.rviz"/>
+</launch>

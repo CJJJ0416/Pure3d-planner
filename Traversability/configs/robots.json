@@ -1,0 +1,207 @@
+{
+  "_comment": "教师条件顺序：[clearance_min,slope_max,step_max,interval_free,stand_ratio]。学生选择第0、1、2、4列，interval_free固定0.5m。",
+  "_field_notes": {
+    "condition_names": "教师五维条件名称；学生四维为clearance_min、slope_max、step_max、stand_ratio",
+    "condition_scale": "条件归一化尺度：训练/推理时用原始条件除以该值",
+    "profiles": "14组固定学生条件（基准、多档单参数、已知问题组合）及1组高净空教师诊断",
+    "random_ranges": "各教师条件的范围，stand_ratio为无量纲比例",
+    "random_profiles": "每个场景按seed再生成10组四参数联合分层随机条件，interval_free固定0.5m"
+  },
+  "condition_names": [
+    "clearance_min",
+    "slope_max",
+    "step_max",
+    "interval_free",
+    "stand_ratio"
+  ],
+  "condition_scale": [
+    1.0,
+    0.5,
+    0.3,
+    1.0,
+    1.0
+  ],
+  "profiles": [
+    {
+      "id": "nominal",
+      "condition": [
+        0.5,
+        0.4,
+        0.3,
+        0.5,
+        0.1
+      ]
+    },
+    {
+      "id": "small_clearance",
+      "condition": [
+        0.2,
+        0.4,
+        0.3,
+        0.5,
+        0.1
+      ]
+    },
+    {
+      "id": "medium_clearance",
+      "condition": [
+        0.7,
+        0.4,
+        0.3,
+        0.5,
+        0.1
+      ]
+    },
+    {
+      "id": "wide_clearance",
+      "condition": [
+        0.9,
+        0.4,
+        0.3,
+        0.5,
+        0.1
+      ]
+    },
+    {
+      "id": "low_slope",
+      "condition": [
+        0.5,
+        0.2,
+        0.3,
+        0.5,
+        0.1
+      ]
+    },
+    {
+      "id": "medium_slope",
+      "condition": [
+        0.5,
+        0.5,
+        0.3,
+        0.5,
+        0.1
+      ]
+    },
+    {
+      "id": "high_slope",
+      "condition": [
+        0.5,
+        0.6,
+        0.3,
+        0.5,
+        0.1
+      ]
+    },
+    {
+      "id": "low_step",
+      "condition": [
+        0.5,
+        0.4,
+        0.12,
+        0.5,
+        0.1
+      ]
+    },
+    {
+      "id": "medium_step",
+      "condition": [
+        0.5,
+        0.4,
+        0.2,
+        0.5,
+        0.1
+      ]
+    },
+    {
+      "id": "high_step",
+      "condition": [
+        0.5,
+        0.4,
+        0.4,
+        0.5,
+        0.1
+      ]
+    },
+    {
+      "id": "low_stand",
+      "condition": [
+        0.5,
+        0.4,
+        0.3,
+        0.5,
+        0.05
+      ]
+    },
+    {
+      "id": "strict_stand",
+      "condition": [
+        0.5,
+        0.4,
+        0.3,
+        0.5,
+        0.3
+      ]
+    },
+    {
+      "id": "high_stand",
+      "condition": [
+        0.5,
+        0.4,
+        0.3,
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "joint_wide_slope",
+      "condition": [
+        0.9,
+        0.6,
+        0.3,
+        0.5,
+        0.1
+      ]
+    },
+    {
+      "id": "tall_robot",
+      "condition": [
+        0.5,
+        0.4,
+        0.3,
+        1.1,
+        0.1
+      ]
+    }
+  ],
+  "random_ranges": [
+    [
+      0.2,
+      1.0
+    ],
+    [
+      0.18,
+      0.65
+    ],
+    [
+      0.08,
+      0.4
+    ],
+    [
+      0.35,
+      1.2
+    ],
+    [
+      0.05,
+      0.5
+    ]
+  ],
+  "random_profiles": 10,
+  "overview_profiles": [
+    "nominal",
+    "wide_clearance",
+    "high_slope",
+    "high_step",
+    "strict_stand",
+    "joint_wide_slope"
+  ]
+}

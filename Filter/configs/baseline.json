@@ -1,0 +1,13 @@
+{
+  "name": "relative_no_six_statistics",
+  "geometry_mode": "relative",
+  "encoder": "utonia_tiny",
+  "training_config": "Filter/configs/train_scoring_no_knn.json",
+  "checkpoint": "runs/filter_scoring_no_knn_20261113/best.pt",
+  "epoch": 34,
+  "step": 952,
+  "sha256": "27b417b904787aede5703e47f6ab96d6affa49d1a93f70bfa6ecb2d2da918d1a",
+  "output": "all original XYZ and same-order keep_score",
+  "threshold": null,
+  "weights_distributed_in_git": false
+}

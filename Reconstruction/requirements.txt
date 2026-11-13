@@ -1,0 +1,7 @@
+# Install in the existing pure3d-ptv3 environment, or use --target .deps/recon.
+warp-lang==1.19.0
+rtree==1.4.1
+
+# Evaluation-only VST teacher
+cupy-cuda12x>=13,<14
+fastrlock

@@ -1,0 +1,53 @@
+{
+  "title": "全类型楼梯域随机增强微调",
+  "dataset_version": "all_stairs_dr_v3",
+  "data": "datasets/wfc_all_stairs_dr_v3",
+  "output": "runs/cost_all_stairs_dr_v3",
+  "initial_checkpoint": "runs/cost_wide_stair_v2/best.pt",
+  "template_scene": "datasets/wfc_unseen_20261127/scene_20261127/scene.json",
+  "replay_data": "datasets/wfc_capability_dr_v2",
+  "replay_cache": "datasets/wfc_wide_stair_v2",
+  "retention_data": "datasets/wfc_all_stairs_dr_v3/retention",
+  "regression_data": "datasets/wfc_regression_20261127",
+  "geometry_python": "/home/cjh/glocal2-nav/.venv/bin/python",
+  "data_module": "Traversability.experiments.all_stair_data",
+  "report_module": "Traversability.experiments.all_stair_report",
+  "seed": 20264100,
+  "splits": {"train": 64, "val": 16, "test": 16},
+  "per_template": {"train": 8, "val": 2, "test": 2},
+  "focused_fraction": 0.5,
+  "broad_geometry": {
+    "riser_m": [0.12, 0.44],
+    "tread_depth_m": [0.18, 0.85],
+    "width_m": [0.55, 1.9],
+    "inner_radius_m": [0.18, 0.95],
+    "turns": [0.65, 1.6],
+    "rise_m": [2.3, 4.0]
+  },
+  "focused_multipliers": {
+    "riser_m": [0.8, 1.2],
+    "tread_depth_m": [0.65, 1.35],
+    "width_m": [0.75, 1.25],
+    "inner_radius_m": [0.7, 1.3],
+    "turns": [0.8, 1.2],
+    "rise_m": [0.85, 1.15]
+  },
+  "side_gap_m": [0.55, 1.8],
+  "condition_ranges": [[0.2, 1.0], [0.18, 0.7], [0.08, 0.55], [0.02, 0.5]],
+  "training_banks": 2,
+  "training": {
+    "epochs": 30,
+    "batch_size": 2,
+    "blocks_per_epoch": 480,
+    "stair_blocks": 336,
+    "stair_balance_by": "augmentation_target",
+    "num_workers": 2,
+    "cpu_threads": 4,
+    "amp": "bf16",
+    "freeze_encoder_epochs": 2,
+    "learning_rate": 0.00005,
+    "encoder_learning_rate": 0.000005,
+    "evaluation_every_epochs": 5,
+    "condition_difference_weight": 1.0
+  }
+}

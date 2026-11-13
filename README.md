@@ -1,25 +1,25 @@
-# Pure3D
+# Pure3D workspace
 
-大型建筑点云清理、结构修复与机器人条件化三维代价地图。
+建筑点云处理与三维可通行性：rough PCD → Filter → Reconstruction → 条件化 trav_cost → A* → GPMP。
+各阶段分别训练与验收。数据均使用地图原点坐标，单位为米，不把预期的模块串接描述为已经完成的端到端训练。
 
-当前先做：**建筑 PCD + 机器人能力参数 → VST trav_cost 监督训练**。
-
-| 目录 | 用途 |
+| 模块 | 当前代码职责 |
 |---|---|
-| `Traversability/` | 条件化 cost 的数据读取、模型、训练、推理和绘图，代码直接放一层 |
-| `Reconstruction/` | 点云清理与修复，保留已有教程和特征示例 |
-| `common/` | VST、场景生成工具 |
-| `planner/` | 最终代价地图与规划器的接口 |
-| `datasets/` | 点云、VST 监督、数据划分和缓存，每个建筑的数据放一起 |
-| `utils/` | PTv3、共用点云 I/O、坐标、分块和编码器封装 |
-| `runs/` | 每次实验一个目录，集中放权重、日志和预测结果 |
-| `docs/` | 架构、数据契约和训练说明 |
-| `ptv3_tomography/` | 旧单帧工程参考 |
+| [Filter](Filter/README.md) | 冻结 Utonia Tiny，输出全部原始点的 keep_score。当前参考为不含六维统计的 relative 版本，筛除属于显式后处理 |
+| [Reconstruction](Reconstruction/README.md) | 完整 Mesh 监督、缺损点云分块、几何自编码与条件 Flow Matching、表面点生成 |
+| [Traversability](Traversability/README.md) | 建筑 PCD 与机器人条件 → FiLM → 完整三维归一化代价点云，包含训练、恢复、评估与推理 |
+| [Planner](planner/README.md) | DC 三维表面图、A* 搜索和 GPMP 优化，以及交互式起终点 |
+| [增量扫描](common/scanning/README.md) | Warp 逐点射线、连续轨迹与 IMU、Faster-LIO 配准、Mesh 连续监督、分块及原生可视化 |
 
-详细约定见 [文件架构](docs/WORKSPACE_LAYOUT.md)。整体目标见 [建筑 PCD 流程](docs/BUILDING_PCD_PIPELINE.md)。
+当前扫描默认每帧10,000射线、LiDAR 10 Hz、IMU 200 Hz、pitch=0.785 rad、运动速度1.5倍，初末额外静止均为0秒。数据生成使用纯 Warp，Isaac Sim 用于原生可视化。Faster-LIO 使用现有 ROS 2 underlay。运行入口和可配置路径见扫描说明。
 
-真实点云：`datasets/rot_stairs/raw.pcd`。已有 Notebook 和 `Reconstruction/test.py` 中的路径已同步。
+通用 PCD／ROS I/O 集中于 [common/pointcloud_io](common/pointcloud_io/)，VST 和 terrain-generator 位于 common，PTv3 与共用分块工具位于 utils。各模块按 configs、data、models、training、inference、visualization、experiments、docs 组织。
 
-当前处于方案分析阶段，正式 cost 模型尚未训练。此前的草稿与三组 VST 标签保存在 `runs/conditioned_cost_local_20261107/`。
+## 源码与本地产物
 
-本地沿用 `/home/cjh/miniconda3/envs/pure3d-ptv3/bin/python`。VST 标签生成继续使用已有 CuPy 环境。
+- [源码检出说明](docs/SOURCE_CHECKOUT.md)：PTv3 固定子模块、terrain-generator 源码快照及外部运行环境。
+- [文件架构](docs/WORKSPACE_LAYOUT.md)和[跨模块架构](docs/NETWORK_ARCHITECTURE.md)：目录职责与接口。
+- [Filter 操作流程](Filter/docs/TRAINING_WORKFLOW.md)和[Cost 操作流程](Traversability/docs/TRAINING_WORKFLOW.md)：训练、恢复、测试和独立推理。
+- datasets、runs、weights、缓存、编译产物和本地 Seen2Scene 参考 checkout 不随源码提交。已完成实验档案中的本地结果链接需配套实验数据才能打开。
+
+默认只保留 best.pt、last.pt 两个训练权重入口。所有权重与数据在本地独立管理，不纳入 Git。

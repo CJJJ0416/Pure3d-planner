@@ -1,0 +1,3 @@
+warp-lang==1.18.0
+# Other dependencies are already shared by Filter: numpy, scipy, trimesh,
+# open3d, manifold3d, matplotlib. ROS replay uses system Python and ROS Humble.

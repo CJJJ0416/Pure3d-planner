@@ -1,0 +1,8 @@
+{
+  "source": "common/Mid360_imu_sim/scan_mode/mid360.csv",
+  "sha256_uncompressed": "aa1fc08b6a4400608dbd6ee832b7ea3a9c3c37197e734f60f58fe5abf762269a",
+  "rows": 800000,
+  "license": "common/Mid360_imu_sim/LICENSE",
+  "columns": ["sequence_index_not_seconds", "azimuth_deg", "zenith_deg"],
+  "note": "Reuse the local Gazebo model's angular pattern. Its first column is a sequence index. Rolling point times are synthesized, not hardware-calibrated. The Gazebo C++ plugin itself remains an instantaneous scan with offset_time=0."
+}

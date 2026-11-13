@@ -1,0 +1,25 @@
+{
+  "version": "recon_terrain_curriculum_v1",
+  "encoder": "utonia_tiny",
+  "frozen_encoder": true,
+  "feature_channels": 486,
+  "fine_spacing_m": 0.06,
+  "latent_spacing_m": 0.24,
+  "latent_channels": 32,
+  "geometry_feature_channels": 128,
+  "levels_m": [
+    0.24,
+    0.12,
+    0.06,
+    0.03,
+    0.015
+  ],
+  "velocity_model": "time_conditioned_3d_unet",
+  "velocity_channels": [
+    64,
+    128,
+    256
+  ],
+  "output": "PCD",
+  "cost_integration": "deferred"
+}

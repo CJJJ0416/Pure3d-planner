@@ -1,0 +1,30 @@
+{
+  "version": "filter_block_ghost_full_points_v3_air_scatter",
+  "seed": 821010,
+  "output": "datasets/filter_block_ghost_example/seed_821010",
+  "base_config": "Filter/configs/dataset.json",
+  "candidate_spacing_m": 0.03,
+  "input_voxel_m": null,
+  "window": {
+    "core_size_m": [4.0, 4.0, 3.0],
+    "context_margin_m": 1.0,
+    "export_individual_pcd_boxes": true
+  },
+  "variant": {"name": "sparse_floating_ghosts_inside_and_outside", "registration": false, "dynamic": false},
+  "floating_ghosts": [
+    {"zone": "core", "kind": "fragment", "semantic": "wall", "radius_m": 0.5, "destination_xyz": [0.95, 0.75, 1.8], "points_per_position": 12, "jitter_std_m": 0.035},
+    {"zone": "core", "kind": "trail", "semantic": "stair", "radius_m": 0.55, "destination_xyz": [-1.1, -0.7, 1.55], "drift_xyz": [-0.25, 0.35, 0.45], "rotation_deg": [3.0, 4.0, 7.0], "copies": 8, "points_per_position": 3, "jitter_std_m": 0.025},
+    {"zone": "core", "kind": "volume_scatter", "semantic": "wall", "air_regions": [
+      {"lower": [-1.75, -1.75, 0.5], "upper": [-0.95, 1.75, 2.4], "points": 60},
+      {"lower": [0.9, 0.2, 1.2], "upper": [1.75, 1.75, 2.4], "points": 60},
+      {"lower": [-0.7, -1.8, 0.45], "upper": [0.65, -1.15, 2.4], "points": 60}
+    ]},
+    {"zone": "context_ring", "kind": "fragment", "semantic": "wall", "radius_m": 0.5, "destination_xyz": [2.65, 0.5, 1.8], "points_per_position": 40, "jitter_std_m": 0.035},
+    {"zone": "context_ring", "kind": "trail", "semantic": "railing", "radius_m": 0.55, "destination_xyz": [-2.7, -1.25, 1.5], "drift_xyz": [-0.05, 0.25, 0.45], "rotation_deg": [2.0, 3.0, 5.0], "copies": 6, "points_per_position": 12, "jitter_std_m": 0.025},
+    {"zone": "context_ring", "kind": "vertical_scatter", "semantic": "wall", "radius_m": 0.7, "destination_xyz": [2.65, 0.2, 1.65], "surface_fraction": 0.18, "points_per_position": 60, "jitter_std_m": 0.045},
+    {"zone": "outside_context", "kind": "fragment", "semantic": "wall", "radius_m": 0.5, "destination_xyz": [3.6, 0.3, 1.9], "points_per_position": 40, "jitter_std_m": 0.035},
+    {"zone": "outside_context", "kind": "trail", "semantic": "stair", "radius_m": 0.5, "destination_xyz": [-3.65, -0.55, 1.4], "drift_xyz": [-0.3, 0.4, 0.65], "rotation_deg": [3.0, 5.0, 8.0], "copies": 8, "points_per_position": 12, "jitter_std_m": 0.025},
+    {"zone": "outside_context", "kind": "vertical_scatter", "semantic": "wall", "radius_m": 0.7, "destination_xyz": [0.8, 3.85, 1.7], "surface_fraction": 0.18, "points_per_position": 60, "jitter_std_m": 0.045},
+    {"zone": "context_ring", "kind": "near_surface_control", "semantic": "wall", "radius_m": 0.2, "destination_xyz": [-2.225, 0.3, 1.1], "points_per_position": 40, "jitter_std_m": 0.006}
+  ]
+}

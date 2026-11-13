@@ -1,0 +1,36 @@
+digraph Pure3D {
+  graph [rankdir=TB, splines=ortho, bgcolor="#f8fafc", pad=0.28, nodesep=0.4, ranksep=0.4,
+         fontname="Noto Sans CJK SC", fontsize=20,
+         label="Pure3D 网络结构 v3\n共享一次编码 · 各任务单独训练后冻结", labelloc=t];
+  node [shape=box, style="rounded,filled", fontname="Noto Sans CJK SC", fontsize=13,
+        margin="0.20,0.14", color="#94a3b8", fillcolor="white", penwidth=1.3];
+  edge [fontname="Noto Sans CJK SC", fontsize=11, color="#64748b", arrowsize=0.7];
+  raw [label="rough PCD\n地图 XYZ · 窗口与上下文", fillcolor="#e2e8f0"];
+  encoder [label="固定 E_shared\n同一份预训练 PTv3 · 每窗口一次前向", fillcolor="#e2e8f0"];
+  feature [label="坐标关联特征 F\n体素特征 + inverse + 原始 XYZ", fillcolor="#ede9fe", color="#8b5cf6"];
+  filter [label="F：FilterHead\n单独训练 → 冻结\n目标结构保留分数", fillcolor="#dbeafe", color="#3b82f6"];
+  selected [label="XYZ_keep + F_keep\n按相同保留索引选择 · 不重新编码"];
+  recon [label="R：重建解码器\n单独训练 → 冻结\n读取保留特征并生成缺失区域特征", fillcolor="#dbeafe", color="#3b82f6"];
+  latent [label="可查询的补全特征 H(q)\n已有点与新增点均可取得特征", fillcolor="#ede9fe", color="#8b5cf6"];
+  geometry [label="GeometryHead（随 R 训练）\n已有保留点 + 生成点 → repaired XYZ", fillcolor="#dcfce7", color="#22c55e"];
+  cost [label="C：Adapter + FiLM + CostHead\n单独训练 → 冻结\nH(q) + 机器人参数 → cost", fillcolor="#dbeafe", color="#3b82f6"];
+  robot [label="机器人条件 r\nclearance_min / slope_max / step_max / stand_ratio", fillcolor="#fef3c7", color="#f59e0b"];
+  cloud [label="最终三维代价点云\n[repaired XYZ, cost] · 保留地图坐标", fillcolor="#dcfce7", color="#22c55e"];
+  planner [label="A* → GPMP\n三维路径与优化轨迹", fillcolor="#e2e8f0"];
+  gtfilter [label="F 监督\n结构保留标签", fillcolor="#ffedd5", color="#fb923c"];
+  gtrecon [label="R 监督\n完整目标表面 / Mesh", fillcolor="#ffedd5", color="#fb923c"];
+  gtcost [label="C 监督\nVST Tomogram 查询与 cost/50", fillcolor="#ffedd5", color="#fb923c"];
+  raw -> encoder -> feature -> filter -> selected -> recon -> latent -> cost -> cloud -> planner [weight=100];
+  feature -> selected [style=dashed, constraint=false];
+  latent -> geometry;
+  geometry -> cost [style=dashed];
+  geometry -> cloud;
+  robot -> cost;
+  gtfilter -> filter [style=dashed, color="#f97316", constraint=false];
+  gtrecon -> recon [style=dashed, color="#f97316", constraint=false];
+  gtcost -> cost [style=dashed, color="#f97316", constraint=false];
+  {rank=same; filter; gtfilter;}
+  {rank=same; recon; gtrecon;}
+  {rank=same; latent; geometry;}
+  {rank=same; cost; robot; gtcost;}
+}

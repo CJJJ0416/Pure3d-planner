@@ -1,229 +1,147 @@
+"""PCD → DC表面 → 跨阶连边 → C++单向A* → 反重力GPMP。"""
 from pathlib import Path
-import pickle
+import time
+
 import numpy as np
+from scipy import sparse
+from scipy.sparse.csgraph import connected_components
+from scipy.spatial import cKDTree
 
-from .utils.convertion import transTrajGrid2Map
-
-from global_planner.native_loader import load_native
-
-a_star, ele_planner, traj_opt = load_native()
-
-
-class TomogramPlanner(object):
-    def __init__(self, cfg):
-        self.cfg = cfg
-
-        self.use_quintic = self.cfg.planner.use_quintic
-        self.max_heading_rate = self.cfg.planner.max_heading_rate
-        self.cost_threshold = float(self.cfg.planner.cost_threshold)
-        self.cost_barrier = float(self.cfg.planner.cost_barrier)
+from common.pointcloud_io import fields_xyz,read_pcd_fields
+from .geometry.voxel import voxel_mean,observed_voxel_field,support_clearance
+from .geometry.dual_contouring import dual_contouring,outward_vertex_normals
+from .graph.adjacency import surface_graph,connect_step_surfaces
+from .graph.astar import NativeAStar
+from .optimization.gpmp import GravityGPMP
 
 
-        self.tomogram=None
-        self.resolution = None
-        self.center = None
-        self.n_slice = None
-        self.slice_h0 = None
-        self.slice_dh = None
-        self.map_dim = []
-        self.offset = None
+class DCSurfacePlanner:
+    """一张地图构建一次，正式方案和无跨阶边消融共用全部节点与代价。"""
+    def __init__(self,config,build_folder=None):
+        self.config=config
+        self.build_folder=Path(build_folder) if build_folder is not None else Path(__file__).resolve().parents[1]/'datasets/cache/planner_dc_native'
 
-        self.layer_elev_grids = None  # 存储每个layer的高度网格（elev_g）
-        self.valid_ground = None
+    def load_pcd(self,path):
+        began=time.perf_counter();self.source_pcd=str(Path(path).resolve());cfg=self.config;self.setup={}
+        started=time.perf_counter();raw=read_pcd_fields(path);coord=fields_xyz(raw)
+        self.input_points=len(raw);self.setup['pcd_read_s']=time.perf_counter()-started
+        started=time.perf_counter();voxel=voxel_mean(coord,raw['trav_cost'],cfg.voxel_resolution)
+        keep=np.ones(len(voxel['xyz']),dtype=bool)
+        if cfg.roi_min is not None:
+            keep=((voxel['xyz']>=cfg.roi_min)&(voxel['xyz']<=cfg.roi_max)).all(1)
+        self.xyz=voxel['xyz'][keep];self.cost=voxel['cost'][keep]
+        self.original_point_count=int(voxel['counts'][keep].sum())
+        self.setup['voxel_prepare_s']=time.perf_counter()-started
+        field,origin,self.field_info=observed_voxel_field(self.xyz,cfg.voxel_resolution)
+        self.setup['field_prepare_s']=self.field_info['field_prepare_s']
+        started=time.perf_counter();self.surface,self.triangles,self.dc_info=dual_contouring(field,origin,cfg.voxel_resolution)
+        self.setup['dc_extract_s']=time.perf_counter()-started
+        started=time.perf_counter();self.normals,self.normal_info=outward_vertex_normals(self.surface,self.triangles,field,origin,cfg.voxel_resolution)
+        self.setup['normals_s']=time.perf_counter()-started
+        started=time.perf_counter();_,nearest=cKDTree(self.xyz).query(self.surface,workers=-1)
+        # 与cost映射共用来源编号，端点只吸附到该PCD体素关联的表面候选。
+        self.surface_source_voxel=nearest
+        self.surface_cost=self.cost[nearest].astype(float)
+        self.search_surface=self.surface+cfg.search_normal_offset*self.normals
+        self.setup['surface_cost_transfer_s']=time.perf_counter()-started
+        started=time.perf_counter()
+        self.source_clear,self.source_overhead_distance=support_clearance(
+            self.xyz,field,origin,cfg.voxel_resolution,cfg.gravity_up,cfg.interval_free)
+        self.surface_step_support=self.source_clear[self.surface_source_voxel]
+        self.setup['support_clearance_s']=time.perf_counter()-started
+        # 原三角网格及cost不变，来源净空仅限制新增跨阶边。
+        started=time.perf_counter()
+        nodes,c,_,_,ids,base=surface_graph(self.search_surface,self.triangles,self.surface_cost,cfg.cost_threshold)
+        self.node_xyz=nodes;self.node_cost=c;self.node_indices=ids
+        self.base_graph=base.astype(bool).astype(np.int8)
+        linked,self.link_info=connect_step_surfaces(self.surface,self.normals,ids,self.base_graph,
+            cfg.step_max,cfg.slope_max,cfg.step_horizontal_radius,cfg.gravity_up,cfg.minimum_step_height,
+            support_mask=self.surface_step_support)
+        self.link_info['source_interval_free_m']=cfg.interval_free
+        self.step_graph=linked.astype(bool).astype(np.int8)
+        self.setup['cost_and_graph_s']=time.perf_counter()-started
+        started=time.perf_counter();self._build_endpoint_index()
+        self.setup['endpoint_index_s']=time.perf_counter()-started
+        self.optimizer=GravityGPMP(self.xyz,self.cost,cfg)
+        self.search=NativeAStar(self.build_folder);self.setup['native_compile_s']=self.search.compile_s
+        self.setup['total_prepare_s']=time.perf_counter()-began
 
-        self.start_idx = np.zeros(3, dtype=np.int32)
-        self.end_idx = np.zeros(3, dtype=np.int32)
+    def _build_endpoint_index(self):
+        """每个来源体素固定一个最近DC候选，距离相同时取原顶点编号最小者。"""
+        cfg=self.config;ids=self.node_indices
+        self.up=np.asarray(cfg.gravity_up,dtype=float);self.up/=np.linalg.norm(self.up)
+        self.endpoint_nodes=np.flatnonzero(self.normals[ids]@self.up>=np.cos(cfg.slope_max))
+        vertices=ids[self.endpoint_nodes];owners=self.surface_source_voxel[vertices]
+        delta=self.surface[vertices]-self.xyz[owners]
+        distance2=np.einsum('ij,ij->i',delta,delta)
+        order=np.lexsort((vertices,distance2,owners))
+        self.anchor_voxel_indices,first=np.unique(owners[order],return_index=True)
+        self.anchor_node_indices=self.endpoint_nodes[order[first]]
+        self.anchor_tree=cKDTree(self.xyz[self.anchor_voxel_indices])
 
-    def loadTomogram(self, tomo_file):
-        # [ROS2适配] 使用 launch 提供的绝对地图路径，不再依赖脚本工作目录。
-        with Path(tomo_file).open('rb') as handle:
-            data_dict = pickle.load(handle)
+    def anchor(self,points):
+        """查询XYZ表示PCD支撑位置，返回同形状的输入体素锚点XYZ。"""
+        _,index=self.anchor_tree.query(np.asarray(points,dtype=float))
+        return self.xyz[self.anchor_voxel_indices[index]]
 
-            self.tomogram = np.asarray(data_dict['data'], dtype=np.float32)
+    def _snap(self,points):
+        query=np.asarray(points,dtype=float)
+        _,index=self.anchor_tree.query(query)
+        voxels=self.anchor_voxel_indices[index];nodes=self.anchor_node_indices[index]
+        support=self.surface[self.node_indices[nodes]]
+        return np.linalg.norm(support-query,axis=-1),nodes,support,voxels,self.xyz[voxels]
 
-            self.resolution = float(data_dict['resolution'])
-            self.center = np.asarray(data_dict['center'], dtype=np.double)
-            self.n_slice = self.tomogram.shape[1]
-            self.slice_h0 = float(data_dict['slice_h0'])
-            self.slice_dh = float(data_dict['slice_dh'])
-            self.map_dim = [self.tomogram.shape[2], self.tomogram.shape[3]]
-            self.offset = np.array([int(self.map_dim[0] / 2), int(self.map_dim[1] / 2)], dtype=np.int32)
+    def snap(self,points):
+        """PCD锚点→对应DC表面，保持(distance,node,support_xyz)返回格式。"""
+        distance,nodes,support,_,_=self._snap(points)
+        return distance,nodes,support
 
-        trav = self.tomogram[0]
-        trav_gx = self.tomogram[1]
-        trav_gy = self.tomogram[2]
-        elev_g = self.tomogram[3]
-        self.valid_ground = np.isfinite(elev_g)
-        # 旧 pickle 也可能把无观测区域存成低代价；加载时屏蔽并同步代价梯度。
-        if np.any(trav[~self.valid_ground] != self.cost_barrier):
-            trav[~self.valid_ground] = self.cost_barrier
-            trav_gx.fill(0.0)
-            trav_gy.fill(0.0)
-            trav_gx[:, 1:-1, :] = trav[:, 2:, :] - trav[:, :-2, :]
-            trav_gy[:, :, 1:-1] = trav[:, :, 2:] - trav[:, :, :-2]
-        # 保留 NaN 供 A* 显式判断地面有效性；GPMP 的缺测高度由原生入口处理。
-        elev_g = np.where(self.valid_ground, elev_g, np.nan)
-        elev_c = self.tomogram[4]
-        elev_c = np.nan_to_num(elev_c, nan=1e6)
-        # 存储所有layer的高度网格（关键：后续用于XY查高度）
-        self.layer_elev_grids = elev_g
-        self.initPlanner(trav, trav_gx, trav_gy, elev_g, elev_c)
-      
+    def astar(self,start,goal,step_edges=None):
+        enabled=self.config.step_edges if step_edges is None else step_edges
+        began=time.perf_counter()
+        query=np.asarray([start,goal],dtype=float)
+        snap,endpoints,support_endpoints,voxels,anchors=self._snap(query)
+        snap_s=time.perf_counter()-began
+        endpoint_snap=dict(query_xyz=query.tolist(),pcd_anchor_xyz=anchors.tolist(),
+            source_voxel_indices=voxels.tolist(),node_ids=endpoints.tolist(),
+            surface_vertex_ids=self.node_indices[endpoints].tolist(),dc_support_xyz=support_endpoints.tolist(),
+            query_to_anchor_m=np.linalg.norm(anchors-query,axis=1).tolist(),
+            anchor_to_dc_m=np.linalg.norm(support_endpoints-anchors,axis=1).tolist(),
+            query_to_dc_m=snap.tolist())
+        graph=self.step_graph if enabled else self.base_graph
+        metrics,path=self.search.search(graph,self.node_xyz,self.node_cost,endpoints,self.config.cost_weight)
+        metrics.update(start_snap_m=float(snap[0]),goal_snap_m=float(snap[1]),step_edges=enabled,
+            endpoint_snap_s=snap_s)
+        result=dict(success=metrics['found'],metrics=metrics,endpoint_nodes=endpoints,
+            surface_endpoints=support_endpoints,node_path=path,endpoint_snap=endpoint_snap)
+        if metrics['found']:
+            ids=self.node_indices[path];xyz=self.node_xyz[path];c=self.node_cost[path]
+            length=np.linalg.norm(np.diff(xyz,axis=0),axis=1)
+            integral=float(np.sum(length*(c[:-1]+c[1:])/2))
+            metrics.update(integral_cost_m=integral,mean_cost=integral/metrics['length_m'],max_cost=float(c.max()))
+            edges=np.column_stack((path[:-1],path[1:]))
+            metrics['new_edges_used']=int((np.asarray(self.base_graph[edges[:,0],edges[:,1]]).ravel()==0).sum())
+            result.update(xyz=xyz,cost=c,point_indices=ids,support_xyz=self.surface[ids])
+        return result
 
+    def plan(self,start,goal,step_edges=None):
+        began=time.perf_counter();astar=self.astar(start,goal,step_edges)
+        result=dict(success=astar['success'],astar=astar)
+        if astar['success']:
+            support_path=astar['support_xyz'].copy()
+            # 查询约定为输入PCD支撑位置，机体端点从PCD锚点沿反重力偏移。
+            # 内部DC节点和A*结果保持原样，避免把壳面偏移叠到端点高度上。
+            support_path[[0,-1]]=astar['endpoint_snap']['pcd_anchor_xyz']
+            result['gpmp']=self.optimizer.optimize(support_path)
+            result['gpmp']['metrics']['endpoint_support_reference']='input PCD voxel anchors'
+        result['planning_wall_s']=time.perf_counter()-began
+        return result
 
-    def _grid_cell_by_xy(self, x, y):
-        """返回 tomogram 的 (x索引, y索引)；越界或非有限坐标返回 None。"""
-        if not np.isfinite([x, y]).all():
-            return None
-        # 在整数转换前拒绝越界，避免将地图外坐标 clip 到边缘或发生整数溢出。
-        cell = np.round((np.array([x, y]) - self.center) / self.resolution) + self.offset
-        if not ((cell >= 0).all() and (cell < self.map_dim).all()):
-            return None
-        return int(cell[0]), int(cell[1])
-
-    def get_layer_height_by_xy(self, layer_idx, x, y):
-        """读取当前网格的地面高度；无观测/越界返回 NaN，不借用其他网格。"""
-        cell = self._grid_cell_by_xy(x, y)
-        if cell is None or not 0 <= layer_idx < self.n_slice:
-            return float('nan')
-        return float(self.layer_elev_grids[layer_idx, cell[0], cell[1]])
-    
-
-    def match_best_layer(self, x, y, target_height):
-        """在有效且高度匹配的层中选最低代价；代价相同则选高度更近者。
-
-        返回 layer 索引，没有有效候选时返回 None。零代价是合法通行代价。
-        """
-        cell = self._grid_cell_by_xy(x, y)
-        if cell is None or not np.isfinite(target_height):
-            return None
-        grid_x, grid_y = cell
-        best_key = (float('inf'), float('inf'))
-        best_layer = None
-
-        # 迭代所有layer（可优化：先粗筛再细查，减少迭代次数）
-        for layer_idx in range(self.n_slice):
-            # 获取该layer下XY对应的真实高度
-            layer_height = float(self.layer_elev_grids[layer_idx, grid_x, grid_y])
-            print("layer_idx:",layer_idx,flush=True)
-
-            # 跳过无效层
-            if not self.valid_ground[layer_idx, grid_x, grid_y]:
-                continue
-            # 计算高度差值（绝对值）
-            diff = abs(layer_height - target_height)
-            print("layer_height",layer_height,flush=True)
-            print("target_height",target_height,flush=True)
-            print("layer_height_diff",diff,flush=True)
-            if diff > self.slice_dh:
-                continue
-
-            layer_cost_ = float(self.tomogram[0, layer_idx, grid_x, grid_y])
-            print("layer_cost_",layer_cost_,flush=True)
-            print("\n")
-
-            if not np.isfinite(layer_cost_) or not 0.0 <= layer_cost_ <= self.cost_threshold:
-                continue
-            # 更新最佳匹配
-            key = (layer_cost_, diff)
-            if key < best_key:
-                best_key = key
-                best_layer = layer_idx
-        return best_layer
-        
-    def initPlanner(self, trav, trav_gx, trav_gy, elev_g, elev_c):
-        diff_t = trav[1:] - trav[:-1]
-        diff_g = np.abs(elev_g[1:] - elev_g[:-1])
-
-        gateway_up = np.zeros_like(trav, dtype=bool)
-        mask_t = diff_t < -8.0
-        mask_g = (diff_g < 0.1) & self.valid_ground[1:] & self.valid_ground[:-1]
-        gateway_up[:-1] = np.logical_and(mask_t, mask_g)
-
-        gateway_dn = np.zeros_like(trav, dtype=bool)
-        mask_t = diff_t > 8.0
-        mask_g = (diff_g < 0.1) & self.valid_ground[1:] & self.valid_ground[:-1]
-        gateway_dn[1:] = np.logical_and(mask_t, mask_g)
-        
-        gateway = np.zeros_like(trav, dtype=np.int32)
-        gateway[gateway_up] = 2
-        gateway[gateway_dn] = -2
-
-        self.planner = ele_planner.OfflineElePlanner(
-            max_heading_rate=self.max_heading_rate, use_quintic=self.use_quintic
-        )
-        self.planner.init_map(
-            self.cost_threshold, 15, self.resolution, self.n_slice, 1,
-            trav.reshape(-1, trav.shape[-1]).astype(np.double),
-            elev_g.reshape(-1, elev_g.shape[-1]).astype(np.double),
-            elev_c.reshape(-1, elev_c.shape[-1]).astype(np.double),
-            gateway.reshape(-1, gateway.shape[-1]),
-            trav_gy.reshape(-1, trav_gy.shape[-1]).astype(np.double),
-            -trav_gx.reshape(-1, trav_gx.shape[-1]).astype(np.double)
-        )
-
-
-
-    def plan(self, start_pos, end_pos):
-        print("pos origin start:", start_pos,flush=True)
-        print("pos origin end:", end_pos,flush=True)
-
-        # 匹配起始点的最佳layer
-        start_layer = self.match_best_layer(
-            start_pos[0], start_pos[1], start_pos[2]
-        )
-        # 匹配目标点的最佳layer
-        print("start_layer:", start_layer, flush=True)
-        print("\n\n\n\n")
-
-        end_layer= self.match_best_layer(
-            end_pos[0], end_pos[1], end_pos[2]
-        )
-        print("end_layer:", end_layer, flush=True)
-        if start_layer is None or end_layer is None:
-            print("起终点选层失败：没有有效地面、匹配高度或可通行代价。", flush=True)
-            return None
-        
-
-        self.start_idx[1:] = self.pos2idx(start_pos[:2])
-        self.end_idx[1:] = self.pos2idx(end_pos[:2])
-        self.start_idx[0] = start_layer
-        self.end_idx[0] = end_layer
-    
-
-        if not self.planner.plan(self.start_idx, self.end_idx, True):
-            return None
-        path_finder: a_star.Astar = self.planner.get_path_finder()
-        path = path_finder.get_result_matrix()
-        if len(path) == 0:
-            return None
-
-        optimizer: traj_opt.GPMPOptimizer = (
-            self.planner.get_trajectory_optimizer()
-            if not self.use_quintic
-            else self.planner.get_trajectory_optimizer_wnoj()
-        )
-
-        opt_init = optimizer.get_opt_init_value()
-        init_layer = optimizer.get_opt_init_layer()
-        traj_raw = optimizer.get_result_matrix()
-        layers = optimizer.get_layers()
-        heights = optimizer.get_heights()
-        # print("heights origin:", heights)
-
-
-        opt_init = np.concatenate([opt_init.transpose(1, 0), init_layer.reshape(-1, 1)], axis=-1)
-        traj = np.concatenate([traj_raw, layers.reshape(-1, 1)], axis=-1)
-        y_idx = (traj.shape[-1] - 1) // 2
-        traj_3d = np.stack([traj[:, 0], traj[:, y_idx], heights / self.resolution], axis=1)
-        traj_3d = transTrajGrid2Map(self.map_dim, self.center, self.resolution, traj_3d)
-
-        # print(traj_raw,"traj_raw")
-        return traj_3d
-    
-
-    def pos2idx(self, pos):
-        pos = pos - self.center
-        idx = np.round(pos / self.resolution).astype(np.int32) + self.offset
-        idx = np.array([idx[1], idx[0]], dtype=np.float32)
-        return idx
+    def graph_data(self):
+        """供RViz消融显示使用，不保存密集几何场或重复CSR缓存。"""
+        base=sparse.triu(self.base_graph,k=1).tocoo()
+        delta=(sparse.triu(self.step_graph,k=1)-sparse.triu(self.base_graph,k=1)).tocsr();delta.eliminate_zeros();delta=delta.tocoo()
+        n0,l0=connected_components(self.base_graph,directed=False);n1,l1=connected_components(self.step_graph,directed=False)
+        return dict(xyz=self.node_xyz,cost=self.node_cost,original_vertex_ids=self.node_indices,
+            base_edges=np.column_stack((base.row,base.col)),added_edges=np.column_stack((delta.row,delta.col)),
+            labels_before=l0,labels_after=l1,component_counts=np.array([n0,n1]))

@@ -1,0 +1,39 @@
+digraph Recon {
+  graph [rankdir=TB, splines=ortho, bgcolor="#f8fafc", pad=0.3,
+         nodesep=0.35, ranksep=0.45, fontname="Noto Sans CJK SC", fontsize=19,
+         label="RECON Head 设计\n不充分扫描的结构点云 → 恢复后的点云", labelloc=t];
+  node [shape=box, style="rounded,filled", fontname="Noto Sans CJK SC",
+        fontsize=13, margin="0.2,0.14", color="#94a3b8", fillcolor="white"];
+  edge [color="#64748b", arrowsize=0.7];
+  input [label="缺损结构 PCD [N,3]\n楼梯 · 楼面 · 顶面 · 栏杆 · 墙壁", fillcolor="#e2e8f0"];
+  encoder [label="固定 E_shared（公共底座）\n只编码一次，R 阶段不更新", fillcolor="#dbeafe", color="#3b82f6"];
+  filter [label="冻结 FilterHead\n取得 XYZ_keep + F_keep", fillcolor="#e2e8f0"];
+  local [label="观测特征格\n3 / 6 / 12 / 24 cm"];
+  context [label="24 cm 粗特征格\n3D U-Net 传播空洞上下文", fillcolor="#dbeafe", color="#3b82f6"];
+  queries [label="由输入范围生成三维查询格\n覆盖无输入点的区域", fillcolor="#fef3c7", color="#f59e0b"];
+  decoder [label="SurfaceDecoder\n粗上下文 + 局部观测 + 父特征 + 位置编码\n24 → 12 → 6 → 3 → 1.5 cm", fillcolor="#ede9fe", color="#8b5cf6"];
+  probability [label="单元内有表面的概率\nsigmoid(logit)"];
+  offset [label="单元内 XYZ 偏移\n(h/2) × tanh(offset)"];
+  generated [label="生成缺失表面点 [M,3]\n单元中心 + 预测偏移", fillcolor="#dcfce7", color="#22c55e"];
+  merge [label="保留原始 XYZ + 追加新点\n核心块融合 · 生成单元去重"];
+  output [label="恢复后的 PCD [N+M,3]\n保留地图坐标 · 记录观测/生成来源", fillcolor="#dcfce7", color="#22c55e"];
+  gt [label="训练监督\n完整 Mesh 的表面相交标签\n真实表面点 + 面片法向\n门洞 / 井口 / 杆间隙为空", fillcolor="#ffedd5", color="#fb923c"];
+  input -> encoder;
+  encoder -> filter;
+  filter -> local;
+  filter -> context;
+  queries -> decoder;
+  local -> decoder;
+  context -> decoder;
+  decoder -> probability;
+  decoder -> offset;
+  probability -> generated;
+  offset -> generated;
+  generated -> merge;
+  filter -> merge [style=dashed, color="#64748b", constraint=false];
+  merge -> output;
+  gt -> decoder [style=dashed, color="#f97316", constraint=false];
+  {rank=same; local; context;}
+  {rank=same; decoder; gt;}
+  {rank=same; probability; offset;}
+}

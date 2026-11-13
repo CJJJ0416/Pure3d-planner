@@ -1,0 +1,20 @@
+{
+  "source": "https://github.com/leggedrobotics/terrain-generator.git",
+  "revision": "7be9d9a6ebbed7dc669486426184a4694bfd0bb6",
+  "license": "terrain-generator/LICENSE",
+  "distribution": "vendored source snapshot, not a Gitlink",
+  "local_changes": [
+    {
+      "file": "terrain_generator/trimesh_tiles/mesh_parts/mesh_parts_cfg.py",
+      "description": "Use dataclasses.field(default_factory=...) for NumPy array defaults under Python 3.11",
+      "sha256": "4c113084c0f74c20f3e1b803c7c18ee8498d3f82a8e3bbf12cea94fbea879ec4"
+    }
+  ],
+  "excluded": [
+    ".git metadata",
+    "doc GIFs",
+    "terrain_generator/test",
+    "mesh_cache",
+    "generated outputs"
+  ]
+}

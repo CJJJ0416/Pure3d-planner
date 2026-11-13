@@ -1,0 +1,43 @@
+{
+  "seed": 20261109,
+  "output_root": "datasets/wfc_capability_dr_v2",
+  "rough_grid": 16,
+  "reference_vst": {
+    "interval_min": 0.5,
+    "interval_free": 0.5,
+    "slope_max": 0.4,
+    "step_max": 0.3,
+    "standable_ratio": 0.1,
+    "cost_barrier": 50.0,
+    "safe_margin": 0.5
+  },
+  "support_reference": {"resolution_m": 0.1, "kernel_cells": 7},
+  "domain_randomization": {
+    "area_ratio": 0.4,
+    "floor_count": [3, 4],
+    "grid_rows": [16, 18],
+    "grid_columns": [16, 18],
+    "tile_size_m": [2.2, 2.8],
+    "floor_spacing_m": [2.6, 3.8],
+    "floor_thickness_m": [0.1, 0.18],
+    "roughness_m": [0.04, 0.26],
+    "terrain_relief_m": [0.65, 1.2],
+    "yaw_deg": [0.0, 360.0],
+    "stair_width_m": [0.75, 1.5],
+    "tread_depth_m": [0.22, 0.44],
+    "railing_height_m": [0.8, 1.15],
+    "spiral_turns": [1.0, 1.25],
+    "connection_layout": {
+      "bay_cells_by_kind": {"straight": [3, 2], "switchback": [2, 2], "spiral": [2, 2], "ramp": [3, 2]},
+      "rotations_deg": [0, 90, 180, 270],
+      "edge_margin_cells": 1,
+      "gap_cells": 0
+    },
+    "feature_cases_per_band": 2,
+    "bands": {
+      "below": [0.55, 0.9],
+      "near": [0.9, 1.1],
+      "above": [1.1, 1.5]
+    }
+  }
+}
