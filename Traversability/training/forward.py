@@ -22,7 +22,7 @@ def main():
     parser.add_argument("--split", choices=["train", "val", "test"], default="train")
     parser.add_argument("--indices", nargs="+", type=int, default=[0], help="要前向的块索引")
     parser.add_argument("--device")
-    parser.add_argument("--output", type=Path, default=ROOT / "runs/cost_model_forward")
+    parser.add_argument("--output", type=Path, default=ROOT / "outputs/cost/model_forward")
     args = parser.parse_args()
     config = read_json(args.config)
     torch.set_num_threads(config["cpu_threads"])

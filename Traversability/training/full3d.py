@@ -1,4 +1,5 @@
 """Train conditional cost heads on complete 3-D frozen pretrained features."""
+from Traversability.data.rotating import archive_root
 import argparse
 from copy import deepcopy
 import gc
@@ -47,7 +48,7 @@ def prepare_pool(config, generation, completed_epoch, validation):
         current.update(encoded=True, temporary_bytes=disk_bytes(root/'active'),
             training_blocks=sum(r['split']=='train' for r in meta['blocks']),encoding=encoding)
         write_json(path,current)
-        write_json(output/'generations'/f'{generation:02d}.json',current)
+        write_json(archive_root(config)/'generations'/f'{generation:02d}.json',current)
     return current
 
 
@@ -172,7 +173,7 @@ def train(config, resume=False, stop_after_epoch=None):
         best_encoder_equal_source=all(torch.equal(v,encoder_state[k]) for k,v in selected['encoder'].items()),
         optimizer_steps=sorted({int(v['step']) for v in last['optimizer']['state'].values()}),
         expected_step=sum(r['updates'] for r in history),final_learning_rate=last['optimizer']['param_groups'][0]['lr'],
-        scenes_archived=len(list((output/'scene_archive').glob('scene_*'))),
+        scenes_archived=len(list((archive_root(config)/'scene_archive').glob('scene_*'))),
         rotations_verified=len(list((output/'rotations').glob('*.json'))),
         source_sha256=hashlib.sha256((source/'best.pt' if source is not None else workspace_path(config['encoder']['weights'])).read_bytes()).hexdigest())
     assert verification['expected_epochs_complete'] and verification['encoder_weights_and_buffers_equal_source']

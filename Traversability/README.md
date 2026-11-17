@@ -19,6 +19,6 @@
 | `visualization/` | 报告、图表与本机 RViz |
 | `docs/` | 单份完整训练指南 `TRAINING_WORKFLOW.md` |
 
-从工程根目录执行模块。服务器解释器和数据路径按指南修改后再启动。训练数据保存在 `datasets/<RUN_NAME>/`，产物保存在 `runs/traversability/<RUN_NAME>/`，名字记录 `full3d`、`small`、`frozen`、实际轮数、seed、时间和实验标签。
+从工程根目录执行模块。服务器解释器和数据路径按指南修改后再启动。训练数据保存在 `datasets/<RUN_NAME>/`，产物保存在 `runs/cost/<RUN_NAME>/`，名字记录 `full3d`、`small`、`frozen`、实际轮数、seed、时间和实验标签。
 
 Small 预训练权重已下载并通过 SHA256 校验。当前 Small 配置尚未启动正式训练。

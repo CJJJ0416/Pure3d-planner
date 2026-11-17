@@ -2,7 +2,7 @@
   "status": "implemented",
   "data": "datasets/filter_scoring_mesh_full_20261112",
   "cache": "datasets/cache/filter_scoring_mesh_full_20261112",
-  "output": "runs/filter_scoring_no_knn_20261113",
+  "output": "runs/filter/filter_scoring_no_knn_20261113",
   "dataset_config": "Filter/configs/scoring_mesh_full.json",
   "device": "cuda:0",
   "seed": 42,

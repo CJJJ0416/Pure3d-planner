@@ -5,6 +5,21 @@ import numpy as np
 from scipy import ndimage
 
 
+def filter_dc_points(xyz,cost,maximum=.5):
+    """Strict raw-point cost gate before voxelization and dense DC field allocation."""
+    xyz=np.asarray(xyz);cost=np.asarray(cost)
+    if xyz.ndim!=2 or xyz.shape[1]!=3 or cost.shape!=(len(xyz),):raise ValueError('Expected aligned XYZ and cost')
+    if maximum is not None and (not np.isfinite(maximum) or maximum<=0):raise ValueError('Invalid DC input cost limit')
+    valid=np.isfinite(xyz).all(1)&np.isfinite(cost)&(cost>=0)
+    keep=valid if maximum is None else valid&(cost<maximum)
+    report=dict(input_points=len(xyz),kept_points=int(keep.sum()),rejected_points=int((~keep).sum()),
+        invalid_points=int((~valid).sum()),maximum=maximum,comparison='<' if maximum is not None else 'disabled')
+    if not report['kept_points']:raise ValueError(f'No DC input points remain after cost < {maximum} filtering')
+    filtered_xyz=xyz[keep];filtered_cost=cost[keep]
+    report['retained_bounds']=dict(lower=filtered_xyz.min(0).tolist(),upper=filtered_xyz.max(0).tolist())
+    return filtered_xyz,filtered_cost,report
+
+
 def voxel_mean(xyz, cost, resolution=0.1):
     """每个占用体素输出一个质心、平均 cost、整数索引和原始点数。"""
     grid = np.floor(np.asarray(xyz, dtype=np.float64) / resolution).astype(np.int64)

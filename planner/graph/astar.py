@@ -1,21 +1,18 @@
 """编译并调用正式DC单向A*，不包含其它搜索实现。"""
 import ctypes
 from pathlib import Path
-import subprocess
 import time
 
 import numpy as np
+from ..native import compile_cached
 
 
 class NativeAStar:
     def __init__(self, build_folder):
         build_folder=Path(build_folder)
         build_folder.mkdir(parents=True,exist_ok=True)
-        library=build_folder/'libdc_astar.so'
-        started=time.perf_counter()
-        subprocess.run(['g++','-O3','-std=c++17','-ffp-contract=off','-shared','-fPIC',
-            str(Path(__file__).with_suffix('.cpp')),'-o',str(library)],check=True)
-        self.compile_s=time.perf_counter()-started
+        library,self.compile_s,self.compile_cache_hit=compile_cached(
+            Path(__file__).with_suffix('.cpp'),build_folder,'libdc_astar')
         self.library=ctypes.CDLL(str(library));self.function=self.library.dc_astar
         array=np.ctypeslib.ndpointer
         self.function.argtypes=[ctypes.c_uint32,array(dtype=np.uint64,ndim=1,flags='C_CONTIGUOUS'),

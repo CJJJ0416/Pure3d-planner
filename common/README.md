@@ -9,6 +9,10 @@
 | `geneator/` | 官方 terrain-generator 与 WFC 粗糙多层场景生成入口 |
 | `Mid360_imu_sim/` | MID-360 方向表、模型与已有 Gazebo ROS 2 插件 |
 | `scanning/` | 逐点 Warp 扫描、带噪 IMU、Faster-LIO、Mesh 监督、分块及 Isaac/RViz 查看 |
+| `livox_ros_driver2/` | 仿真所需的原生 CustomMsg/CustomPoint 接口，无硬件驱动 |
+| `quadruped_ros2_control/` | A1 描述、ros2_control 控制器、RL 策略和键盘输入 |
+| `unitree_gazebo/` | `sim/` 仿真、`real/` 真机配置与入口，`scripts/` 共用 LIO/TF 外参转换 |
+| `SCAN-Planner/` | 现有 ROS 2 SCAN 局部规划、地图、轨迹和跟踪器 |
 
 预训练 PTv3、坐标处理、分块和编码器封装放在 `../utils/`。
 

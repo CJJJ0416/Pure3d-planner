@@ -22,7 +22,7 @@
     "model": "模型结构与体素化参数"
   },
   "data": "datasets/wfc_response_paired_v4",
-  "output": "runs/cost_response_local",
+  "output": "runs/cost/cost_response_local",
   "device": "cuda:0",
   "seed": 20261107,
   "epochs": 12,

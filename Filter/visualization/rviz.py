@@ -208,7 +208,7 @@ def full_scene_configuration(scene):
 def show_full_scene(folder, variant, output):
     scene = read_json(folder / "scene.json")
     stamp = datetime.now(ZoneInfo("Asia/Shanghai")).strftime("%Y%m%d_%H%M%S")
-    output = workspace_path(output) if output else ROOT / "runs/filter_dataset_rviz" / f"full_scene_{stamp}"
+    output = workspace_path(output) if output else ROOT / "outputs/filter/dataset_rviz" / f"full_scene_{stamp}"
     output.mkdir(parents=True, exist_ok=True)
     os.environ.setdefault("ROS_LOG_DIR", str(output / "ros_logs"))
     path = output / "filter_full_scene.rviz"
@@ -320,7 +320,7 @@ def main():
     metadata = read_json(box / "box.json")
     attributes=window_attributes(box,metadata)
     stamp = datetime.now(ZoneInfo("Asia/Shanghai")).strftime("%Y%m%d_%H%M%S")
-    output = workspace_path(args.output) if args.output else ROOT / "runs/filter_dataset_rviz" / stamp
+    output = workspace_path(args.output) if args.output else ROOT / "outputs/filter/dataset_rviz" / stamp
     output.mkdir(parents=True, exist_ok=True)
     os.environ.setdefault("ROS_LOG_DIR", str(output / "ros_logs"))
     selection = dict(random_seed=seed, selection=("uniform_over_trail_boxes" if args.with_trails else "uniform_over_all_boxes") if not args.box else "explicit_box",

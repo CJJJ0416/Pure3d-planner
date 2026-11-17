@@ -1,8 +1,12 @@
 # DC 三维点云规划
 
-正式方案为 **XYZ + trav_cost PCD → 均值体素 → DC 表面 → 跨阶连边 → C++ 单向 A* → 反重力 GPMP**。唯一消融为同一张 DC 图关闭跨阶连边。点云、代价、节点、起终点、搜索目标和 GPMP 全部共用。
+在线 Entry 新增 `SparseSurfacePlanner`（`planner/surface.py`）：通行性只由 cost 判定，不做坡度、阶高、法向、净空或机身碰撞过滤。C++ 单次稀疏聚合同步生成低 cost 搜索表面和完整 cost 查询体素；无 EDT/DC，GPMP 不再重读、排序原始点云。坐标仅用于分层和相邻柱配对，缺测区域不补边。在线默认选择与运行说明见 `Entry/EXPLORATION.md`；以下独立静态工具仍默认使用 DC，历史结果保持原义。
+
+正式方案为 **XYZ + trav_cost PCD → 原始点 cost < 0.5 筛选 → 均值体素 → DC 表面 → 跨阶连边 → C++ 单向 A* → 反重力 GPMP**。唯一消融为同一张 DC 图关闭跨阶连边。点云、代价、节点、起终点、搜索目标和 GPMP 全部共用。
 
 输入 cost 已由 `Traversability` 预测，范围为0–1。规划器不重新运行网络，不读取 OBJ、分层地图或合成 Mesh 缓存。地图原点与米制 XYZ 保持不变。更新机器人条件后先重新预测 cost，再使用相同条件构图。
+
+`dc_input_cost_max=0.5` 在原始点级、体素均值与距离场构建前执行严格 `<` 筛选，排除非有限 XYZ/cost 和负代价；cost 恰为 0.5 的点也排除。DC 几何、法向、来源锚点及净空检查使用筛选结果，表面拓扑可能随之改变。完整输入 PCD 与 cost 保留；可选 GPMP 仍按完整原始 cost 的体素场查询代价，并在首次使用时加载。设置 `dc_input_cost_max=null` 可复现旧版未筛选 DC 几何。`map.json` 的 `dc_input_filter` 记录筛选前后点数，`geometry_field` 记录实际网格尺寸。
 
 ## 文件
 
@@ -38,17 +42,17 @@ planner/
 ```bash
 cd /home/cjh/Pure3D_ws
 /home/cjh/glocal2-nav/.venv/bin/python -m planner.plan \
-  --pcd runs/cost_wide_stair_v2/predictions/rot_stairs_20261110_142602/prediction.pcd \
+  --pcd runs/cost/cost_wide_stair_v2/predictions/rot_stairs_20261110_142602/prediction.pcd \
   --config planner/config/rot_stair.json \
   --start 0 4 0.2 --goal 0 4 3.3 \
-  --output runs/planner/rot_stair_lower_middle_20261111 --plot
+  --output outputs/planner/rot_stair_lower_middle_20261111 --plot
 ```
 
 增加 `--ablation` 在同一次地图准备后运行有/无跨阶边两组。`--without-step` 只运行消融。默认 `dc.json` 不裁剪输入。真实楼梯示例的 ROI 明确保存在 `rot_stair.json`，没有自动缩小地图或调整阈值。
 
 运行目录只有 `map/`、`with_step/`、可选 `without_step/` 及配置、查询、summary、REPORT、图。地图只保存可视化所需点和边，不导出密集几何场和重复CSR缓存。编译产物保存在该run的 `native/`，不写入源码目录。无路径时记录失败状态，不保留该输出位置的旧路径。
 
-当前验收结果位于 `runs/planner/rot_stair_lower_middle_20261111`。整理后实际复跑的结果与整理前一致：
+旧版未启用输入 cost 筛选的验收结果位于 `outputs/planner/rot_stair_lower_middle_20261111`，以下表格为历史记录。当前启用筛选后应另存新运行目录验证：
 
 | 方案 | A*长度 | cost积分 | GPMP长度 | GPMP收敛 |
 |---|---:|---:|---:|---|
@@ -61,7 +65,7 @@ cd /home/cjh/Pure3D_ws
 source /opt/ros/humble/setup.bash
 cd /home/cjh/Pure3D_ws
 /usr/bin/python3 -m planner.visualization.rviz \
-  --run runs/planner/rot_stair_lower_middle_20261111
+  --run outputs/planner/rot_stair_lower_middle_20261111
 ```
 
 默认显示紫色正式方案。左侧可开启深紫色无跨阶边消融、原三角边与新增跨阶边。细线是A*，粗线是GPMP。
@@ -70,8 +74,8 @@ cd /home/cjh/Pure3D_ws
 
 ```bash
 /usr/bin/python3 -m planner.visualization.rviz \
-  --run runs/planner/rot_stair_lower_middle_20261111 \
-  --reference runs/planner/rot_stair_lower_middle_20261111/reference_vst/reference.json
+  --run outputs/planner/rot_stair_lower_middle_20261111 \
+  --reference outputs/planner/rot_stair_lower_middle_20261111/reference_vst/reference.json
 ```
 
 橙色为已保存的VST参考。该选点在VST15下无路，VST25下A*32.067899m、返回GPMP28.776659m。VST使用教师cost和原生优化器，原生接口不提供GPMP收敛标记。原始数据、参数及共同cost评价保存在 `reference_vst/`，不作为额外消融方案。
@@ -80,8 +84,8 @@ cd /home/cjh/Pure3D_ws
 
 ```bash
 /usr/bin/python3 -m Traversability.visualization.rviz \
-  --prediction runs/cost_wide_stair_v2/predictions/rot_stairs_20261110_142602/prediction.pcd \
-  --planning runs/planner/rot_stair_lower_middle_20261111/with_step --interactive
+  --prediction runs/cost/cost_wide_stair_v2/predictions/rot_stairs_20261110_142602/prediction.pcd \
+  --planning outputs/planner/rot_stair_lower_middle_20261111/with_step --interactive
 ```
 
 ## 接口与参数

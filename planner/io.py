@@ -18,6 +18,7 @@ def save_map(planner,output):
     write_pcd(output/'dc_surface_cost.pcd',planner.search_surface,planner.surface_cost)
     graph=planner.graph_data();np.savez(output/'graph_view.npz',**graph)
     metadata=dict(source_pcd=planner.source_pcd,input_points=planner.input_points,
+        dc_input_filter=planner.prefilter_info,
         original_points_in_roi=planner.original_point_count,voxel_points=len(planner.xyz),
         dc_vertices=len(planner.surface),dc_triangles=len(planner.triangles),search_nodes=len(planner.node_xyz),
         component_counts=graph['component_counts'].tolist(),base_undirected_edges=len(graph['base_edges']),

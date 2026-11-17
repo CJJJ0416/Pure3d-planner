@@ -3,7 +3,7 @@
   "seed": 20261112,
   "source_data": "datasets/wfc_capability_dr_v2",
   "data": "datasets/cost_sliced_tiny_local50_20261113",
-  "output": "runs/traversability/cost_sliced_tiny_local50_20261113",
+  "output": "runs/cost/cost_sliced_tiny_local50_20261113",
   "geometry_python": "/home/cjh/glocal2-nav/.venv/bin/python",
   "neural_python": "/home/cjh/miniconda3/envs/pure3d-ptv3/bin/python",
   "teacher_config": "common/vst_global_planner/configs/teacher_building.json",

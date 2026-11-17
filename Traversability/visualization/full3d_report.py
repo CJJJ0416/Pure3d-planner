@@ -1,4 +1,5 @@
 """Full-3D training evidence, original sliced reference, and identical-query comparisons."""
+from Traversability.data.rotating import archive_root
 import argparse
 from pathlib import Path
 
@@ -90,18 +91,18 @@ def main():
     rotations=[read_json(p) for p in sorted((output/'rotations').glob('*.json'))]
     generation=read_json(data/'generation.json')
     storage=dict(rotations=rotations,active_seeds=generation['seeds'],active_bytes=disk_bytes(data/'active'),
-        fixed_cache_bytes=disk_bytes(data/'fixed'),archive_bytes=disk_bytes(output/'scene_archive'),
+        fixed_cache_bytes=disk_bytes(data/'fixed'),archive_bytes=disk_bytes(archive_root(config)/'scene_archive'),
         all_prior_pools_removed=all(r['previous_active_removed'] and r['previous_wfc_cache_removed'] for r in rotations))
     write_json(output/'storage_verification.json',storage)
     assert len(rotations)==generations-1 and storage['all_prior_pools_removed']
     encodings=[]
-    for path in sorted((output/'generations').glob('*.json')):
+    for path in sorted((archive_root(config)/'generations').glob('*.json')):
         encodings += [s for s in read_json(path)['encoding']['scenes'] if s['scene'].startswith('scene_20261114') and s['scene'] not in ['scene_20261114']]
     timings={name:float(sum(r['timing'][name] for r in encodings)) for name in
         ['pcd_read_s','gpu_voxel_s','gpu_correspondence_s','grouping_s','tiny_encoding_s','cache_write_s','total_s']}
     assert len(encodings)==scene_count
     for record in encodings:
-        write_json(output/'scene_archive'/record['scene']/'full3d_encoding.json', record)
+        write_json(archive_root(config)/'scene_archive'/record['scene']/'full3d_encoding.json', record)
     write_json(output/'timing_summary.json',dict(training_scene_count=scene_count,preparation=timings,
         head_training_s=sum(r['elapsed_s'] for r in history),fixed_cache=[read_json(data/s['id']/'full3d_encoding.json') for s in meta['scenes'] if s['split']!='train']))
     # Source XYZ and actual matches are inspectable without loading Tiny or the teacher.

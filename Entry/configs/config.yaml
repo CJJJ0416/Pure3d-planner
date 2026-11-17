@@ -1,0 +1,28 @@
+cloud_topic: /faster_lio/cloud_registered
+odom_topic: /faster_lio/Odometry
+goal_topic: /scan/goal
+frame: map
+source_frame: camera_init
+world_frame: world
+use_sim_time: true
+core_size_m: [4.0, 4.0, 3.0]
+context_m: 1.0
+condition: [0.5, 0.4, 0.4, 0.0]
+arrival_tolerance_m: 0.3
+arrival_dwell_s: 3.0
+initial_observation_s: 3.0
+cost_trigger: goal
+inference_frame: world
+inference_recompute: full
+visualization_hz: 2.0
+display_voxel_m: 0.1
+display_max_points: 200000
+display_hz: 1.0
+snapshot_hz: 2.0
+pending_scan_limit: 50
+input_qos_depth: 50
+network_python: /home/cjh/miniconda3/envs/pure3d-ptv3/bin/python
+checkpoint: 'weights/cost/cost_full3d_small_unfrozen_e200_20261114-005204/best.pt'
+expected_epoch: 56
+device: cuda:0
+output_root: outputs/entry

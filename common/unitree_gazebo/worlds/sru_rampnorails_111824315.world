@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<sdf version="1.7"><world name="sru_rampnorails_111824315">
+<plugin name="gazebo_ros_state" filename="libgazebo_ros_state.so"><update_rate>1000</update_rate></plugin>
+<gravity>0 0 -9.81</gravity><physics name="ode" type="ode"><max_step_size>0.001</max_step_size><real_time_update_rate>1000</real_time_update_rate><real_time_factor>1</real_time_factor><ode><solver><type>quick</type><iters>50</iters></solver></ode></physics>
+<scene><ambient>0.5 0.5 0.5 1</ambient><background>0.8 0.85 0.9 1</background><shadows>true</shadows></scene>
+<light name="sun" type="directional"><cast_shadows>true</cast_shadows><pose>0 0 20 0 0 0</pose><diffuse>0.8 0.8 0.8 1</diffuse><specular>0.1 0.1 0.1 1</specular><direction>-0.5 0.2 -1</direction></light>
+<gui fullscreen="false"><camera name="user_camera"><pose>12 -25 14 0 0.5 1.8</pose><view_controller>orbit</view_controller></camera></gui>
+<!-- The existing mesh supplies both floors. A ground_plane at z=0 would fill real voids. -->
+<include><uri>model://SRU-RampNoRails-111824315</uri><name>SRU-RampNoRails-111824315</name><pose>0 0 0 0 0 0</pose></include>
+</world></sdf>

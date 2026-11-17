@@ -264,7 +264,7 @@ def show_prediction(path, planning=None, interactive=False, query=None):
                       'Reliability Policy': 'Reliable', 'Durability Policy': 'Transient Local',
                       'History Policy': 'Keep Last'},
         })
-    output = ROOT / "runs/prediction_rviz" if planning is None else planning / 'rviz'
+    output = ROOT / "outputs/cost/prediction_rviz" if planning is None else planning / 'rviz'
     if query_path is not None:
         output = query_path.parent / 'rviz'
     if interactive:
@@ -381,7 +381,7 @@ def main():
     if args.prediction:
         raise SystemExit(show_prediction(args.prediction, args.planning, args.interactive, args.query))
     folder = args.scene.resolve()
-    output = ROOT / "runs/tomogram_rviz"
+    output = ROOT / "outputs/cost/tomogram_rviz"
     output.mkdir(parents=True, exist_ok=True)
     # 把 ROS 日志限制在 runs 目录，避免污染工作区其他位置
     os.environ.setdefault("ROS_LOG_DIR", str(output / "ros_logs"))

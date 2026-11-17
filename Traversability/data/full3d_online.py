@@ -1,4 +1,5 @@
 """Geometry/index caching for trainable Tiny, without encoder-feature caches."""
+from Traversability.data.rotating import archive_root
 import argparse
 from copy import deepcopy
 import hashlib
@@ -15,7 +16,7 @@ from utils.pointcloud import read_json, workspace_path, write_json
 
 def verify_generation(config):
     root=workspace_path(config['data']);output=workspace_path(config['output'])
-    reference=workspace_path(config['frozen_reference_run'])/'scene_archive'
+    reference=archive_root(dict(output=config['frozen_reference_run']))/'scene_archive'
     meta=read_json(root/'manifest.json');checks=[]
     for scene in [s for s in meta['scenes'] if s['split']=='train']:
         old=read_json(reference/scene['id']/'supervision.json')
@@ -26,7 +27,7 @@ def verify_generation(config):
             conditions_equal=scene['profiles']==read_json(reference/scene['id']/'conditions.json'),
             banks_equal=scene['banks']==old['banks'],pairs_equal=scene['pairs']==old['pairs'])
         assert all(value for key,value in current.items() if key!='scene'), current
-        write_json(output/'scene_archive'/scene['id']/'frozen_data_comparison.json',current)
+        write_json(archive_root(config)/'scene_archive'/scene['id']/'frozen_data_comparison.json',current)
         checks.append(current)
     return checks
 
@@ -98,7 +99,7 @@ def prepare_maps(config):
             maximum_match_m=float(distance.max()),maximum_cell_radius=int(radius.max()),
             preparation_s=time.perf_counter()-started)
         write_json(ready,report);reports.append(report)
-        write_json(workspace_path(config['output'])/'scene_archive'/scene['id']/'online_geometry.json',report)
+        write_json(archive_root(config)/'scene_archive'/scene['id']/'online_geometry.json',report)
         progress(config,'geometry_mapping',scene=scene['id'],blocks_completed=len(rows),blocks_total=len(rows))
         del raw,points,original,source,query,distance,radius
         torch.cuda.empty_cache()

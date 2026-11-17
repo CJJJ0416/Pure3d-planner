@@ -1,0 +1,47 @@
+# Real MID360 input; match common topics to the running hardware driver.
+/**:
+  ros__parameters:
+    use_sim_time: false
+    common:
+      lid_topic: /livox/lidar
+      imu_topic: /livox/imu
+      time_sync_en: false
+    preprocess:
+      # This port calls the Livox CustomMsg branch AVIA. MID360 uses it too;
+      # types 2/3 are PointCloud2 branches for Velodyne/Ouster.
+      lidar_type: 1
+      scan_line: 4  # MID360 hardware driver exports line indices 0..3.
+      blind: 0.3
+      time_scale: 0.001
+    mapping:
+      acc_cov: 0.01
+      gyr_cov: 0.01
+      b_acc_cov: 0.0001
+      b_gyr_cov: 0.0001
+      det_range: 40.0
+      extrinsic_est_en: false
+      # p_IMU = R * p_LIDAR + T, inverse of laser_livox -> livox_imu_link.
+      extrinsic_T: [0.011, 0.02329, -0.04412]
+      extrinsic_R: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
+    publish:
+      path_publish_en: false  # Body path is published by the frame bridge.
+      scan_publish_en: true
+      scan_effect_pub_en: false
+      dense_publish_en: true
+      scan_bodyframe_pub_en: false
+      tf_world_frame: camera_init
+      tf_imu_frame: mid360_imu_estimate  # Private raw TF; converted to public body.
+    feature_extract_enable: false
+    point_filter_num: 2
+    max_iteration: 4
+    filter_size_surf: 0.25
+    filter_size_map: 0.25
+    cube_side_length: 100.0
+    ivox_grid_resolution: 0.5
+    ivox_nearby_type: 26
+    esti_plane_threshold: 0.1
+    path_save_en: false
+    runtime_pos_log_enable: false
+    pcd_save:
+      pcd_save_en: false
+      interval: -1

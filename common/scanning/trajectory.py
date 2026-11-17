@@ -15,10 +15,15 @@ class Trajectory:
     def __init__(self, mesh, config):
         self.config = config
         self.mount_rotation = Rotation.from_euler('xyz', config['mount_rpy_rad']).as_matrix()
+        if 'support_path' in config:
+            self._from_support_path(config)
+            return
         # Start within the corridor, turn left into the stairwell and return.
         xy = np.array([[-1.2, -2], [-.6, -2], [0., -2], [.382683, -1.92388],
                        [.707107, -1.707107], [.92388, -1.382683], [1., -1.],
                        [1., -.2], [1., 1.0], [1., 2.2], [1., 3.65]])
+        # Separate routes share the building, but not their viewpoints or IMU.
+        xy = np.asarray(config.get('trajectory_xy', xy), dtype=float)
         knots = np.r_[0, np.cumsum(np.linalg.norm(np.diff(xy, axis=0), axis=1))]
         planar = CubicSpline(knots, xy, bc_type='natural')
         s = np.linspace(0, knots[-1], 2500)
@@ -46,6 +51,32 @@ class Trajectory:
         self.position = CubicSpline(sample_t, position, bc_type=((1, np.zeros(3)), (1, np.zeros(3))))
         self.heading = CubicSpline(sample_t, heading, bc_type=((1, 0.), (1, 0.)))
         self.length_m = float(2 * arc[-1])
+
+    def _from_support_path(self, config):
+        # VST/GPMP XYZ selects the actual floor. Never ray-project from above
+        # through a multilayer building to choose support for this trajectory.
+        support = np.load(config['support_path'])
+        support = support[np.r_[True, np.linalg.norm(np.diff(support,axis=0),axis=1)>1e-6]]
+        arc = np.r_[0,np.cumsum(np.linalg.norm(np.diff(support,axis=0),axis=1))]
+        fraction = np.linspace(0,1,12001)
+        spline = CubicSpline(arc/arc[-1], support)
+        travel = quintic(fraction)
+        position = spline(travel)
+        # Smooth sampled stair heights over ~9 cm, while retaining their floor.
+        dense_s = np.linspace(0,1,12001)
+        z = gaussian_filter1d(spline(dense_s)[:,2], .09/(arc[-1]/12000), mode='nearest')
+        position[:,2] = np.interp(travel,dense_s,z)+config['sensor_height_m']
+        tangent = spline(travel,1)
+        heading = np.unwrap(np.arctan2(tangent[:,1],tangent[:,0]))
+        p_unit = CubicSpline(fraction,position,bc_type=((1,np.zeros(3)),(1,np.zeros(3))))
+        h_unit = CubicSpline(fraction,heading,bc_type=((1,0.),(1,0.)))
+        critical=h_unit.derivative(2).roots(extrapolate=False)
+        critical=np.r_[0.,critical[np.isfinite(critical)],1.]
+        self.minimum_duration_s = max(np.linalg.norm(p_unit(fraction,1),axis=1).max()/config['max_speed_m_s'],
+            np.abs(h_unit(critical,1)).max()/np.deg2rad(config['max_yaw_rate_deg_s']))
+        self.position = CubicSpline(fraction*config['duration_s'],position,bc_type=((1,np.zeros(3)),(1,np.zeros(3))))
+        self.heading = CubicSpline(fraction*config['duration_s'],heading,bc_type=((1,0.),(1,0.)))
+        self.length_m = float(arc[-1])
 
     def evaluate(self, time):
         time = np.asarray(time)
@@ -87,8 +118,14 @@ class Trajectory:
                     static_specific_force=acc[0].tolist(), finite=bool(np.isfinite(acc).all()))
 
 
-def actor_position(time, actor):
+def actor_position(time, actor, config=None):
     time = np.asarray(time)
+    if config is not None and 'actor_support_paths' in config:
+        path = np.asarray(config['actor_support_paths'][actor])
+        arc = np.r_[0,np.cumsum(np.linalg.norm(np.diff(path,axis=0),axis=1))]
+        phase = (time*[.6,.25][actor]) % (2*arc[-1])
+        distance = np.where(phase<=arc[-1],phase,2*arc[-1]-phase)
+        return np.stack([np.interp(distance,arc,path[:,axis]) for axis in range(3)],axis=-1)
     speed, y = [(.6, -2.4), (.25, -1.6)][actor]
     amplitude = 1.15
     x = -1.9 + amplitude * np.sin(speed / amplitude * time + actor)

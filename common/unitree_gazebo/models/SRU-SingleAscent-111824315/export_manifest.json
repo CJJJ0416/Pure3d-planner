@@ -1,0 +1,40 @@
+{
+  "source_obj": "/home/cjh/glocal2-nav/isaac_training/data/sru_fresh_multifloor_20261027_v2/base/assets/train_u_courtyard_01/terrain.obj",
+  "source_scene": "/home/cjh/glocal2-nav/isaac_training/data/sru_fresh_multifloor_20261027_v2/base/assets/train_u_courtyard_01/scene.json",
+  "source_sha256": "0b82d3ef9c0d15a44aa8b900161e094616f8f0f2205b6f444eb9818f80d84ddd",
+  "scene_sha256": "c99ea2c1d95dc922a1c7422022c8055e1a7b6caa5ccbef46eac15421d9cfb309",
+  "dae_sha256": "d2b34f084d764efb7224b927cc9201770e309bdf674f1d2d9464f09e00132c39",
+  "seed": 111824315,
+  "source_name": "train_u_courtyard_01",
+  "model_name": "SRU-SingleAscent-111824315",
+  "vertices": 5108,
+  "triangles": 12000,
+  "bounds_m": [
+    [
+      -9.10422134,
+      -15.10187721,
+      -0.46539658
+    ],
+    [
+      9.10422134,
+      15.10187721,
+      3.53653836
+    ]
+  ],
+  "metre_scale": 1,
+  "up_axis": "Z_UP",
+  "world_transform": "identity",
+  "vertex_roundtrip_max_error_m": 0,
+  "triangle_indices_exact": true,
+  "source_degenerate_triangles": 7,
+  "added_ground_plane": false,
+  "visual_collision_same_mesh": true,
+  "suggested_a1_spawn_xyz_yaw": [
+    -1.0215162940345284,
+    -7.237344959137292,
+    0.5,
+    -1.4871114903730263
+  ],
+  "gazebo_physics": "ODE",
+  "source_m0_dynamics_transferred": false
+}

@@ -1,1 +1,0 @@
-"""Reproducible staged reconstruction protocol."""

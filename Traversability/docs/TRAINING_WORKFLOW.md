@@ -33,7 +33,7 @@ export OPENBLAS_NUM_THREADS=4
 
 export RUN_NAME="cost_full3d_small_frozen_e50_s2026111400_$(date +%Y%m%d-%H%M%S)_server01"
 export RUN_CONFIG="$WORKSPACE/Traversability/configs/$RUN_NAME.json"
-export RUN_DIR="$WORKSPACE/runs/traversability/$RUN_NAME"
+export RUN_DIR="$WORKSPACE/runs/cost/$RUN_NAME"
 export FIXED_ROOT="$WORKSPACE/datasets/cost_full3d_small_fixed_v1"
 
 mkdir -p "$WORKSPACE/datasets" "$MPLCONFIGDIR" "$CUPY_CACHE_DIR" "$RUN_DIR"
@@ -56,7 +56,7 @@ cost_full3d_small_frozen_e<实际轮数>_s<全局seed>_<YYYYMMDD-HHMMSS>_<实验
 ```text
 Traversability/configs/<RUN_NAME>.json
 datasets/<RUN_NAME>/
-runs/traversability/<RUN_NAME>/
+runs/cost/<RUN_NAME>/
 ```
 
 恢复同一任务使用原名字和原目录。新的数据配方、模型、损失或预算使用新的名字。
@@ -87,7 +87,7 @@ path = Path(os.environ['RUN_CONFIG'])
 fixed = Path(os.environ['FIXED_ROOT']).resolve()
 cfg = json.loads((root / 'Traversability/configs/full3d_small_frozen.json').read_text())
 cfg.update(
-    data=f'datasets/{name}', output=f'runs/traversability/{name}',
+    data=f'datasets/{name}', output=f'runs/cost/{name}',
     fixed_data=str(fixed / 'prepared'),
     generator_python=os.environ['GENERATOR_PY'],
     geometry_python=os.environ['GEOMETRY_PY'],
@@ -401,14 +401,14 @@ print('FIRST EPOCH VERIFIED', 'epoch=', state['epoch'], 'step=', state['step'])
 PY
 ```
 
-这里验证 Adapter、条件头和代价头有梯度和参数变化，Small 不在优化器中。首轮成功后启动完整编排：
+这里验证 Adapter、条件头和代价头有梯度和参数变化，Small 不在优化器中。首轮成功后继续正式训练：
 
 ```bash
-"$PTV3_PY" -u -m Traversability.experiments.full3d_rotating \
-  --config "$RUN_CONFIG" 2>&1 | tee "$RUN_DIR/pipeline.log"
+"$PTV3_PY" -u -m Traversability.training.full3d \
+  --config "$RUN_CONFIG" --resume 2>&1 | tee "$RUN_DIR/train_resume.log"
 ```
 
-入口检测到 `last.pt` 后，从本次第 1 轮恢复至第 50 轮，按配置轮换训练场景，最后自动运行固定测试、独立 PCD 推理和 Small 报告。可以在 tmux 中执行以上命令，进入新会话后先加载第 8 节的 `session.env`。
+`--resume` 从本次第 1 轮的 `last.pt` 恢复至第 50 轮，按配置轮换训练场景，并生成固定测试指标。独立 PCD 推理和报告分别执行第 9 节命令。可以在 tmux 中执行以上命令，进入新会话后先加载第 8 节的 `session.env`。
 
 ## 7. 训练设置、选优与自动产物
 
@@ -442,7 +442,7 @@ score = normalized cost MAE + mean four-parameter response error
 验证分数最低者更新 `best.pt`。随机任务头的初始化也参与选优，因此最佳轮次可以为 0。训练结束加载最佳权重进行测试，测试集不参与选优。
 
 ```text
-runs/traversability/<RUN_NAME>/
+runs/cost/<RUN_NAME>/
 ├── session.env、requested_config.json
 ├── config.json、protocol.json、execution.json、progress.json
 ├── best.pt、last.pt
@@ -470,25 +470,24 @@ cd "$WORKSPACE"
 set -euo pipefail
 
 cat "$RUN_DIR/progress.json"
-cat "$RUN_DIR/execution.json"
-tail -n 60 "$RUN_DIR/pipeline.log"
-tail -n 60 "$RUN_DIR/train_resume_to_50.log"
+pgrep -af "Traversability.training.full3d"
+tail -n 60 "$RUN_DIR/train_resume.log"
 nvidia-smi
 du -sh "$FIXED_ROOT" "$WORKSPACE/datasets/$RUN_NAME" "$RUN_DIR"
 ```
 
-加载 `session.env` 后，不再运行第 1 节生成新名字的命令。训练阶段日志为 `train_resume_to_<stop_epoch>.log`。场景生成细节在 `generation_*.log` 和 `scene_archive/scene_*/generation.log`。
+加载 `session.env` 后，不再运行第 1 节生成新名字的命令。训练日志为 `train_resume.log`。场景生成细节在 `generation_*.log` 和 `scene_archive/scene_*/generation.log`。
 
 完整三维训练在 epoch 结束时保存 `last.pt`。中断后从最近完整轮末恢复，未保存的轮内更新会重做。Ctrl+C 不保证额外写入轮中 checkpoint。
 
-恢复前对照 `execution.json` 的 PID，确认旧进程退出，然后执行：
+恢复前核对训练进程 PID，确认旧进程退出，然后执行：
 
 ```bash
-"$PTV3_PY" -u -m Traversability.experiments.full3d_rotating \
-  --config "$RUN_CONFIG" 2>&1 | tee -a "$RUN_DIR/pipeline.log"
+"$PTV3_PY" -u -m Traversability.training.full3d \
+  --config "$RUN_CONFIG" --resume 2>&1 | tee -a "$RUN_DIR/train_resume.log"
 ```
 
-该命令按阶段继续，训练完成后衔接测试、推理和报告。只恢复训练子入口时使用：
+该命令恢复正式训练。等价的训练入口为：
 
 ```bash
 "$PTV3_PY" -u -m Traversability.training.full3d \

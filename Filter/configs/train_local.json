@@ -2,7 +2,7 @@
   "status": "implemented",
   "data": "datasets/filter_local_10cm_v3",
   "cache": "datasets/cache/filter_local_10cm_v3",
-  "output": "runs/filter_local_10cm_v3",
+  "output": "runs/filter/filter_local_10cm_v3",
   "dataset_config": "Filter/configs/dataset.json",
   "device": "cuda:0",
   "seed": 42,

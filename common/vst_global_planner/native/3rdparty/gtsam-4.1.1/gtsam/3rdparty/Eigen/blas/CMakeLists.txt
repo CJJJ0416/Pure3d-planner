@@ -49,7 +49,9 @@ if(BUILD_TESTING)
   if(EIGEN_LEAVE_TEST_IN_ALL_TARGET)
     add_subdirectory(testing) # can't do EXCLUDE_FROM_ALL here, breaks CTest
   else()
-    add_subdirectory(testing EXCLUDE_FROM_ALL)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/test/CMakeLists.txt")
+      add_subdirectory(testing EXCLUDE_FROM_ALL)
+    endif()
   endif()
 endif()
 

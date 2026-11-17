@@ -298,7 +298,7 @@ def render_mesh_gt_demo(folder, mesh, clean, rough):
             xlabel='Map Y (m)',ylabel='Map Z (m)',title=title)
         ax.set_aspect('equal');ax.grid(alpha=.15);ax.set_facecolor(BACKGROUND)
     fig.suptitle('Mesh GT versus labelled input | side view | all points',fontsize=16)
-    fig.text(.5,.025,'Geometry is unchanged between input and its score labels. Missing-surface reconstruction is outside this demo.',
+    fig.text(.5,.025,'Geometry is unchanged between input and its score labels.',
         ha='center',fontsize=10)
     fig.subplots_adjust(left=.04,right=.98,bottom=.14,top=.86,wspace=.18)
     fig.savefig(folder/'mesh_gt_side.png',dpi=150,facecolor=BACKGROUND)

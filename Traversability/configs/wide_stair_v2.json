@@ -1,8 +1,8 @@
 {
   "_comment": "从当前best.pt微调。独立随机宽深高直梯，真实VST条件包。旧大地图仅作回归。",
   "data": "datasets/wfc_wide_stair_v2",
-  "output": "runs/cost_wide_stair_v2",
-  "initial_checkpoint": "runs/traversability/best.pt",
+  "output": "runs/cost/cost_wide_stair_v2",
+  "initial_checkpoint": "weights/cost/querypool_reference/best.pt",
   "replay_data": "datasets/wfc_capability_dr_v2",
   "retention_data": "datasets/wfc_wide_stair_v2/retention",
   "regression_data": "datasets/wfc_regression_20261127",

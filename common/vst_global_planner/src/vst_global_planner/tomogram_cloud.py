@@ -2,7 +2,7 @@
 import numpy as np
 
 
-def tomogram_points(payload):
+def tomogram_points(payload, return_cells=False):
     """Export /tomogram geometry and costs, without querying the input PCD.
 
     Adjacent ground layers closer than slice_dh merge into the upper layer,
@@ -14,7 +14,7 @@ def tomogram_points(payload):
     ground = np.asarray(payload["data"][3], dtype=np.float32).copy()
     count, nx, ny = ground.shape
     resolution, center = payload["resolution"], payload["center"]
-    clouds = []
+    clouds, cells = [], []
     for layer in range(count):
         if layer + 1 < count:
             merge = ground[layer + 1] - ground[layer] < payload["slice_dh"]
@@ -26,4 +26,6 @@ def tomogram_points(payload):
             (y - ny // 2) * resolution + center[1],
             ground[layer, x, y], cost[layer, x, y] / payload["cost_scale"],
         )))
-    return np.concatenate(clouds).astype(np.float32)
+        if return_cells:cells.append(np.column_stack((np.full(len(x),layer),x,y)))
+    cloud=np.concatenate(clouds).astype(np.float32)
+    return (cloud,np.concatenate(cells).astype(np.int32)) if return_cells else cloud

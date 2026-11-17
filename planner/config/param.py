@@ -6,6 +6,7 @@ from dataclasses import dataclass
 class PlannerConfig:
     voxel_resolution: float = .1
     cost_threshold: float = .5
+    dc_input_cost_max: float | None = .5
     cost_weight: float = 5.
     step_edges: bool = True
     clearance_min: float = .5

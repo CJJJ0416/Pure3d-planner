@@ -10,7 +10,7 @@
 
 ```bash
 PY=/home/cjh/miniconda3/envs/pure3d-ptv3/bin/python
-RUN=runs/filter_scoring_voxel_20261113
+RUN=runs/filter/filter_scoring_voxel_20261113
 export MPLCONFIGDIR=/tmp/pure3d_filter_matplotlib
 $PY -m Filter.data.scoring --config Filter/configs/scoring_voxel.json
 $PY -m Filter.data.voxel_statistics --config Filter/configs/train_scoring_voxel.json
@@ -33,9 +33,9 @@ $PY -m Filter.visualization.results --run "$RUN"
 $PY -m pip install --no-deps -r Filter/requirements-gpu-knn.txt
 export CUPY_CACHE_DIR=/tmp/pure3d_cupy_cache
 $PY -m Filter.inference.predict \
-  --checkpoint runs/filter_scoring_mesh_full_20261112/best.pt \
+  --checkpoint weights/filter/filter_scoring_mesh_full_20261112/best.pt \
   --pcd datasets/rot_stairs/raw.pcd \
-  --output runs/filter_knn_cuda_20261113/predictions/rot_stair \
+  --output runs/filter/filter_knn_cuda_20261113/predictions/rot_stair \
   --knn-backend cuda
 ```
 
@@ -43,7 +43,7 @@ $PY -m Filter.inference.predict \
 
 后端依赖CuPy 13.6和fastrlock，保留现有NumPy/PyTorch版本。KDTree构建和精确近邻内核来自CuPy官方v14.0.1源码，许可证及CuPy 13兼容改动记录在third_party/cupy_kdtree。半径计数使用单独的CUDA子树边界和批量计数内核，仅保存每个查询的两个计数，不调用上游会分配查询数×点数矩阵的半径API。没有CPU自动回退。
 
-首次运行会编译并缓存CUDA内核。geometry_cuda_s使用CUDA Event，geometry_s是主机提交区间，encode_wall_s可能包含等待前序GPU几何计算的时间。cuda_peak_GiB是Torch分配峰值，另记录cupy_pool_reserved_GiB，二者不是整机GPU占用。新的验证记录位于runs/filter_knn_cuda_20261113。
+首次运行会编译并缓存CUDA内核。geometry_cuda_s使用CUDA Event，geometry_s是主机提交区间，encode_wall_s可能包含等待前序GPU几何计算的时间。cuda_peak_GiB是Torch分配峰值，另记录cupy_pool_reserved_GiB，二者不是整机GPU占用。新的验证记录位于runs/filter/filter_knn_cuda_20261113。
 
 ## 无 KNN 对照版本
 
@@ -53,11 +53,11 @@ $PY -m Filter.inference.predict \
 
 ```bash
 PY=/home/cjh/miniconda3/envs/pure3d-ptv3/bin/python
-RUN=runs/filter_scoring_no_knn_20261113
+RUN=runs/filter/filter_scoring_no_knn_20261113
 $PY -m Filter.training.train --config Filter/configs/train_scoring_no_knn.json
 $PY -m Filter.training.evaluate --checkpoint "$RUN/best.pt" --score-only
 $PY -m Filter.visualization.results --run "$RUN" \
-  --xyz-reference runs/filter_scoring_mesh_full_20261112/predictions
+  --xyz-reference runs/filter/filter_scoring_mesh_full_20261112/predictions
 ```
 
 这一轮只读复用原 333 盒缓存，不运行数据生成或缓存重建。训练保持 seed 42、50 epoch、batch 8、相同来源/结构均衡损失和学习率调度。恢复使用 `$PY -m Filter.training.train --resume "$RUN/last.pt"`。全点推理、显式阈值后处理和 RViz 使用下文相同入口，指定新的 checkpoint 和输出目录。
@@ -81,7 +81,7 @@ Tiny 冻结/eval，单次编码一个完整上下文，缓存原始 486 维特�
 ## 2. 恢复与测试
 
 ```bash
-RUN=runs/filter_scoring_mesh_full_20261112
+RUN=runs/filter/filter_scoring_mesh_full_20261112
 $PY -m Filter.training.train --resume "$RUN/last.pt"
 $PY -m Filter.training.evaluate --checkpoint "$RUN/best.pt" --score-only
 $PY -m Filter.visualization.results --run "$RUN"
@@ -107,14 +107,14 @@ $PY -m Filter.visualization.results --run "$RUN" \
 ```bash
 $PY -m Filter.inference.threshold --prediction "$RUN/predictions/rot_stair/prediction.pcd" \
   --threshold 0.2 --output "$RUN/predictions/rot_stair_tau020"
-$PY -m Traversability.inference.predict --checkpoint runs/traversability/best.pt \
+$PY -m Traversability.inference.predict --checkpoint weights/cost/querypool_reference/best.pt \
   --pcd "$RUN/predictions/rot_stair_tau020/filtered.pcd" --condition 0.5 0.4 0.3 0.1 \
   --output "$RUN/predictions/rot_stair_tau020/cost"
 ```
 
 选择模块不重新推理。输出 filtered.pcd、removed.pcd、filter_mapping.npz 和 selection.json。0.2 为用户指定的操作阈值，评分模型和连续 GT 均不改变。
 
-本轮实际 Filter→cost 对照位于 `runs/filter_scoring_mesh_full_20261112/predictions/rot_stair_traversability_tau020/`。该目录保留过滤前后的同权重 cost 预测与同视角图片。Traversability 条件为 clearance_min、slope_max、step_max、stand_ratio。
+本轮实际 Filter→cost 对照位于 `runs/filter/filter_scoring_mesh_full_20261112/predictions/rot_stair_traversability_tau020/`。该目录保留过滤前后的同权重 cost 预测与同视角图片。Traversability 条件为 clearance_min、slope_max、step_max、stand_ratio。
 
 ## 5. RViz
 

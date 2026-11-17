@@ -22,7 +22,7 @@
     "model": "模型结构与体素化参数"
   },
   "data": "datasets/wfc_capability_dr_stand_v3",
-  "output": "runs/cost_wfc_stand_local",
+  "output": "runs/cost/cost_wfc_stand_local",
   "device": "cuda:0",
   "seed": 20261107,
   "epochs": 50,

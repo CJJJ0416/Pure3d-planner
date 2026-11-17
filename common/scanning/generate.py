@@ -17,7 +17,7 @@ DEFAULT_CONFIG = Path(__file__).with_name('config.json')
 
 def load_config(path=DEFAULT_CONFIG):
     config = read_json(Path(path).resolve())
-    if 'motion_speed_scale' in config:
+    if 'motion_speed_scale' in config and 'support_path' not in config:
         config['duration_s'] = (config['initial_static_s'] +
             config['reference_motion_duration_s']/config['motion_speed_scale'] + config['final_static_s'])
     return config
@@ -25,12 +25,11 @@ def load_config(path=DEFAULT_CONFIG):
 
 def imu_stream(trajectory, config, error, streams):
     dt = 1 / config['imu_hz']
-    time = np.arange(0, config['duration_s'] + .1 + dt / 2, dt)
+    time = np.arange(round((config['duration_s'] + .1) * config['imu_hz']) + 1) / config['imu_hz']
     # Hold the already stationary endpoint through the final LiDAR/IMU bracket.
     truth_time = np.minimum(time, config['duration_s'])
     ideal_acc, ideal_gyro = trajectory.imu(truth_time)
     acc, gyro = ideal_acc.copy(), ideal_gyro.copy()
-    stamps = time.copy()
     biases = {}
     if error:
         rng = np.random.default_rng(streams['imu'])
@@ -40,7 +39,8 @@ def imu_stream(trajectory, config, error, streams):
         acc += a + rng.normal(0, config['acc_noise_std'], acc.shape)
         gyro += g + rng.normal(0, config['gyro_noise_std'], gyro.shape)
         # Correlated measurement jitter, independent of the shared physical trajectory.
-        # Stationary OU process with configured per-axis RMS and 40 ms correlation.
+        # Correlated latent process. Acceleration passes through a bounded
+        # nonlinear tanh, while gyro keeps its existing Gaussian jitter.
         alpha = np.exp(-dt / config['imu_jitter_correlation_s'])
         jitter_rng = np.random.default_rng(streams['imu_jitter'])
         vibration = np.empty((len(time), 6))
@@ -48,15 +48,15 @@ def imu_stream(trajectory, config, error, streams):
         innovations = jitter_rng.normal(size=(len(time)-1, 6)) * np.sqrt(1-alpha**2)
         for i in range(1, len(time)):
             vibration[i] = alpha * vibration[i-1] + innovations[i-1]
-        acc += vibration[:, :3] * config['imu_jitter_acc_std']
+        nonlinear_acc = config['imu_acc_nonlinear_amplitude'] * np.tanh(vibration[:, :3])
+        acc += nonlinear_acc
         gyro += vibration[:, 3:] * config['imu_jitter_gyro_std']
-        jitter = np.random.default_rng(streams['time']).normal(0, config['imu_time_jitter_std_s'], len(time))
-        stamps += config['imu_time_offset_s'] + jitter
-        assert np.all(np.diff(stamps) > 0), 'Nonmonotonic IMU stamps in fixed sample'
         biases = dict(acc=a.tolist(), gyro=g.tolist(),
-            jitter_acc_actual_std=(vibration[:, :3]*config['imu_jitter_acc_std']).std(0).tolist(),
+            acceleration_noise_model='white + constant bias + tanh correlated latent',
+            nonlinear_acc_amplitude_m_s2=config['imu_acc_nonlinear_amplitude'],
+            nonlinear_acc_actual_std=nonlinear_acc.std(0).tolist(),
             jitter_gyro_actual_std=(vibration[:, 3:]*config['imu_jitter_gyro_std']).std(0).tolist())
-    return dict(time=stamps, physical_time=time, acceleration=acc, angular_velocity=gyro,
+    return dict(time=time.copy(), physical_time=time, acceleration=acc, angular_velocity=gyro,
                 ideal_acceleration=ideal_acc, ideal_angular_velocity=ideal_gyro), biases
 
 
@@ -65,7 +65,14 @@ def generate(config, profiles):
     config['output'] = str(root)
     root.mkdir(parents=True, exist_ok=True)
     started = perf_counter()
-    mesh = build(root, config)
+    if 'scene_source' in config:
+        source = Path(config['scene_source']).resolve()
+        for name in ['static_mesh.ply', 'mesh_faces.npz', 'clean.pcd', 'clean_attributes.npz',
+                     'scene.json', 'dynamic_person_proxy.ply', 'dynamic_movable_clutter.ply']:
+            (root / name).symlink_to(source / name)
+        mesh = trimesh.load(root / 'static_mesh.ply', process=False)
+    else:
+        mesh = build(root, config)
     trajectory = Trajectory(mesh, config)
     trajectory_report = trajectory.save(root / 'truth_trajectory.npz')
     scale = config.get('motion_speed_scale', 1.)
@@ -91,8 +98,12 @@ def generate(config, profiles):
         scans = folder / 'scans'
         scans.mkdir(parents=True, exist_ok=True)
         # Shared independent streams make each corruption directly comparable across profiles.
+        stream_codes = dict(scene=101, trajectory=102, actors=103, measurement=104, imu=105, imu_jitter=107)
         streams = {key: int(np.random.SeedSequence([config['seed'], code]).generate_state(1)[0])
-                   for code, key in enumerate(['scene', 'trajectory', 'actors', 'measurement', 'imu', 'time', 'imu_jitter'], 101)}
+                   for key, code in stream_codes.items()}
+        observation_seed = config.get('observation_seed', config['seed'])
+        for key in ['measurement', 'imu', 'imu_jitter']:
+            streams[key] = int(np.random.SeedSequence([observation_seed, streams[key]]).generate_state(1)[0]) if 'observation_seed' in config else streams[key]
         dynamic = profile in ['dynamic', 'mixed']
         edge = profile in ['edge_returns', 'mixed']
         error = profile in ['lio_error', 'mixed']
@@ -119,6 +130,7 @@ def generate(config, profiles):
             records.append(dict(frame=frame, start_s=frame / config['scan_hz'], end_s=end,
                 points=len(result['coord']), dynamic_points=int((~static).sum()),
                 edge_mixed_points=int(result['edge_mixed'].sum()),
+                explicit_ghost_points=int(result['explicit_ghost'].sum()),
                 blind_near_rays=int((result['return_status']==2).sum()),
                 blind_fov_rays=int((result['return_status']==3).sum()), path=f'scans/{frame:05d}.npz'))
             if frame % 100 == 0:
@@ -128,6 +140,7 @@ def generate(config, profiles):
             dynamic=dynamic, edge_returns=edge, lio_error=error, frames=len(records),
             returns=sum(r['points'] for r in records), dynamic_returns=sum(r['dynamic_points'] for r in records),
             edge_mixed_returns=sum(r['edge_mixed_points'] for r in records),
+            explicit_ghost_returns=sum(r['explicit_ghost_points'] for r in records),
             blind_near_rays=sum(r['blind_near_rays'] for r in records),
             blind_fov_rays=sum(r['blind_fov_rays'] for r in records),
             ray_query_and_sensor_s=ray_seconds, raw_save_s=save_seconds,

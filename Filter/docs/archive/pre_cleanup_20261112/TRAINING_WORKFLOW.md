@@ -11,8 +11,8 @@ PY=/home/cjh/miniconda3/envs/pure3d-ptv3/bin/python
 $PY -m Filter.data.scoring --config Filter/configs/scoring_mesh_full.json
 $PY -m Filter.data.features --config Filter/configs/train_scoring_mesh_full.json
 $PY -m Filter.training.train --config Filter/configs/train_scoring_mesh_full.json
-$PY -m Filter.training.evaluate --checkpoint runs/filter_scoring_mesh_full_20261112/best.pt --score-only
-$PY -m Filter.visualization.results --run runs/filter_scoring_mesh_full_20261112 --score-only
+$PY -m Filter.training.evaluate --checkpoint weights/filter/filter_scoring_mesh_full_20261112/best.pt --score-only
+$PY -m Filter.visualization.results --run runs/filter/filter_scoring_mesh_full_20261112 --score-only
 ```
 
 使用现有 pure3d-ptv3 环境，NumPy 保持 1.26.4，Torch 保持 2.10.0+cu128。几何依赖为 trimesh、manifold3d、open3d-cpu 0.19.0、opencv-python-headless。terrain-generator 的 NumPy 数组 dataclass 默认值已改为 default_factory，以支持当前 Python 3.11。
@@ -26,10 +26,10 @@ $PY -m Filter.visualization.results --run runs/filter_scoring_mesh_full_20261112
 真实 ROT stair 全点评分与查看：
 
 ```bash
-$PY -m Filter.inference.predict --checkpoint runs/filter_scoring_mesh_full_20261112/best.pt \
-  --pcd datasets/rot_stairs/raw.pcd --output runs/filter_scoring_mesh_full_20261112/predictions/rot_stair
-$PY -m Filter.visualization.results --run runs/filter_scoring_mesh_full_20261112 \
-  --prediction runs/filter_scoring_mesh_full_20261112/predictions/rot_stair
+$PY -m Filter.inference.predict --checkpoint weights/filter/filter_scoring_mesh_full_20261112/best.pt \
+  --pcd datasets/rot_stairs/raw.pcd --output runs/filter/filter_scoring_mesh_full_20261112/predictions/rot_stair
+$PY -m Filter.visualization.results --run runs/filter/filter_scoring_mesh_full_20261112 \
+  --prediction runs/filter/filter_scoring_mesh_full_20261112/predictions/rot_stair
 ```
 
 真实扫描保持全部原始 XYZ 和点序。图像由全部点的深度投影生成，同一视角的原始图和评分图使用相同可见点。主体近景采用投影坐标的 0.1%–99.9% 显示范围，另存 full_extent 全范围图。此显示范围不影响评分点数和导出的 PCD。真实扫描没有逐点 GT，不报告真实数据 MAE。
@@ -102,22 +102,22 @@ Utonia Tiny 全程冻结/eval。任务头为特征投影 486→128，几何分�
 HF_HUB_OFFLINE=1 /home/cjh/miniconda3/envs/pure3d-ptv3/bin/python \
   -m Filter.training.train --config Filter/configs/train_local.json
 HF_HUB_OFFLINE=1 /home/cjh/miniconda3/envs/pure3d-ptv3/bin/python \
-  -m Filter.training.train --resume runs/filter_local_10cm_v3/last.pt
+  -m Filter.training.train --resume weights/filter/filter_local_10cm_v3/last.pt
 ```
 
 50 epoch，seed42，AdamW LR1e-3、weight decay0.01，5% warmup 后 cosine 到1e-5，Dropout0.1，BF16，float32 loss。workers4、锁页与预取。
 
 前 5 轮逐轮验证，其后每 5 轮验证。按五组 Macro MAE 最低选 best，同分比较固定0.5预测阈值的保留F1。每100次完整更新及每轮结束保存last。Ctrl+C在完成当前参数更新后保存。恢复包含优化器、调度器、随机状态和批次游标。可用 --stop-after-epoch 5 演示保存/恢复，仍保留50轮调度。
 
-输出 runs/filter_local_10cm_v3 下仅 best.pt、last.pt 两个训练checkpoint，以及 config.json、history.json、train.log、progress.json、evaluations、plots 和 predictions。
+输出 runs/filter/filter_local_10cm_v3 下仅 best.pt、last.pt 两个训练checkpoint，以及 config.json、history.json、train.log、progress.json、evaluations、plots 和 predictions。
 
 ## 5. 最终测试与可视化
 
 ```bash
 /home/cjh/miniconda3/envs/pure3d-ptv3/bin/python -m Filter.training.evaluate \
-  --checkpoint runs/filter_local_10cm_v3/best.pt
+  --checkpoint weights/filter/filter_local_10cm_v3/best.pt
 MPLCONFIGDIR=/tmp/pure3d_matplotlib /home/cjh/glocal2-nav/.venv/bin/python \
-  -m Filter.visualization.results --run runs/filter_local_10cm_v3
+  -m Filter.visualization.results --run runs/filter/filter_local_10cm_v3
 ```
 
 GT保留判定固定 y>=0.5。只在验证集比较预测阈值0.3/0.4/0.5/0.6/0.7，按五组平均保留F1选取，同分比较静态误删率、再比较与0.5的距离。GT不会随预测阈值改变。
@@ -130,8 +130,8 @@ best与阈值固定后，测试标准、稀疏、少次数残影三套样本，�
 
 ```bash
 /home/cjh/miniconda3/envs/pure3d-ptv3/bin/python -m Filter.inference.predict \
-  --checkpoint runs/filter_local_10cm_v3/best.pt --pcd datasets/rot_stairs/raw.pcd \
-  --threshold 0.5 --output runs/filter_local_10cm_v3/predictions/rot_stair
+  --checkpoint weights/filter/filter_local_10cm_v3/best.pt --pcd datasets/rot_stairs/raw.pcd \
+  --threshold 0.5 --output runs/filter/filter_local_10cm_v3/predictions/rot_stair
 ```
 
 threshold取evaluations/threshold.json中选定值。输入只需XYZ，不读取GT、来源或Mesh。完整PCD内部做空间块，按核心索引恢复所有原始点序。独立推理同样先按0.1m降采样，计算体素代表点分数后映射回全部原始点。输出 prediction.pcd（XYZ+keep_score）、filtered.pcd、removed.pcd 和阶段耗时。ROT stair没有完整GT，只做迁移查看。

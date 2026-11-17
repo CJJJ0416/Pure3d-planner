@@ -1,0 +1,25 @@
+# Transform convention: p_parent = R(rpy) * p_child + translation.
+# Metres and radians; rpy means fixed-axis roll/pitch/yaw (Rz * Ry * Rx).
+frames:
+  world: world
+  map: map
+  camera: camera_init
+  body: body
+  body_reference: base
+  imu: livox_imu_link
+mount:
+  # urdf: read body_reference -> imu from robot_state_publisher.
+  # parameters: use body_to_lidar * lidar_to_imu below (for a real robot).
+  source: urdf
+  body_to_lidar:
+    translation: [0.2, 0.0, 0.18]
+    rpy: [0.0, 0.785, 0.0]
+  lidar_to_imu:
+    translation: [-0.011, -0.02329, 0.04412]
+    rpy: [0.0, 0.0, 0.0]
+anchor:
+  # Align world -> map once using world -> base and camera_init -> body.
+  # map -> camera_init is always identity when frames.world is configured.
+  source: gazebo
+  translation: [0.0, 0.0, 0.0]
+  rpy: [0.0, 0.0, 0.0]

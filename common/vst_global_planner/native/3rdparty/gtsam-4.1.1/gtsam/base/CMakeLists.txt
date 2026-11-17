@@ -9,4 +9,6 @@ file(GLOB deprecated_headers "deprecated/*.h")
 install(FILES ${deprecated_headers} DESTINATION include/gtsam/base/deprecated)
 
 # Build tests
-add_subdirectory(tests)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/CMakeLists.txt")
+  add_subdirectory(tests)
+endif()

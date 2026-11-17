@@ -38,6 +38,10 @@ def fixed_manifest(config):
                 blocks=[b for b in metadata['blocks'] if b['split'] in ['val', 'test']], complete=True)
 
 
+def archive_root(config):
+    return ROOT / 'datasets/cost' / workspace_path(config['output']).name
+
+
 def prepare_generation(config, generation):
     """Called in the native CuPy geometry environment, with WFC in the torch environment."""
     import trimesh
@@ -71,7 +75,7 @@ def prepare_generation(config, generation):
     for number, seed in enumerate(seeds):
         name = f'scene_{seed}'
         folder = source / name
-        archive = output / 'scene_archive' / name
+        archive = archive_root(config) / 'scene_archive' / name
         archive.mkdir(parents=True, exist_ok=True)
         tick = time.perf_counter()
         if not (folder / 'geometry_ready.json').exists():
@@ -114,7 +118,7 @@ def prepare_generation(config, generation):
         link = root / name
         if not link.is_symlink():
             link.symlink_to(active / 'prepared' / name, target_is_directory=True)
-        archive = output / 'scene_archive' / name
+        archive = archive_root(config) / 'scene_archive' / name
         write_json(archive / 'supervision.json', scene)
         write_json(archive / 'conditions.json', read_json(active / 'prepared' / name / 'ready.json')['scene']['profiles'])
         values = np.load(active / 'prepared' / name / 'cost.npy', mmap_mode='r')

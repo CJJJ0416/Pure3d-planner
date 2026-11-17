@@ -2,6 +2,8 @@
 
 输入为带身份的静态 Mesh 和运动物体，输出为真实 Faster-LIO 算法配准后的逐点观测。RayCaster 是仿真测量，数据不代表硬件采集。模型输入仍只有单张地图系 XYZ。
 
+大场景入口见[大 terrain：VST 随机路径、Warp 射线合批与独立 LIO](TERRAIN_BATCH.md)。
+
 ## 运行
 
 在工作区根目录使用 Pure3D Python。生成与监督使用该环境，ROS 回放由入口自动切换到系统 Python，加载只读的 `livox_ws` underlay。主配置为同目录 `config.json`。
@@ -13,7 +15,7 @@
 当前默认速度为原运动段的1.5倍，初末静止均为0秒。相同路线的运动时间
 为50/1.5≈33.33秒，以10 Hz保存333个完整扫描帧（约33.3秒）。
 `motion_speed_scale` 同时缩放位置与转向时序，IMU由新的连续轨迹重算。
-lio_error和mixed启用既有白噪声、偏置、相关抖动及时间噪声。
+lio_error和mixed启用白噪声、偏置及相关测量抖动，IMU 时间始终与真值同步。
 
 只采集当前轨迹前20秒时使用以下命令，另选输出目录以保留历史对照：
 
@@ -24,6 +26,26 @@ lio_error和mixed启用既有白噪声、偏置、相关抖动及时间噪声。
 ```
 
 `--stages generate replay prepare plot` 可选择单独阶段。失败后不自动重试。检查输出后手动调用需要的阶段。
+
+### 离线回放倍速
+
+`--playback-rate 10` 或配置 playback_rate=10 加快消息发送，保持所有传感器
+时间戳、逐点offset_time、噪声和运动轨迹不变。默认仍为1倍。
+LiDAR先序列化为CDR字节，准备时间单独统计，然后由rclpy原样发布。
+程序等末帧点云及对应里程计收到后才关闭LIO，不用固定5秒等待截断队列。
+长序列按`max_inflight_scans=32`控制IMU与LiDAR共同推进，避免消息队列积压失配。
+实际发送速度以LIO消费速度为准，流控等待时间记录在`flow_control_wait_s`。
+
+```bash
+/home/cjh/miniconda3/envs/pure3d-ptv3/bin/python -m common.scanning.pipeline \
+  --profiles lio_error --playback-rate 10 \
+  --output datasets/filter_fasterlio_scan_v1/seed_821110/rate10_new_capture
+```
+
+replay.json分别记录prepack_wall_s、send_wall_s、drain_wall_s和包含全部三项的
+wall_s。actual_send_rate只表示发送倍速，不能当作LIO处理速度或整条管线加速比。
+每个独立任务使用独立ROS域。单任务pipeline默认ROS_DOMAIN_ID=78，
+可用`--ros-domain-id`指定。批量入口自动分配，见[共用数据与流水线](SHARED_DATASET.md)。
 
 ## 逐点时间与来源
 
@@ -91,12 +113,29 @@ rviz2 -d common/scanning/dataset.rviz
   --root datasets/filter_fasterlio_scan_v1/seed_821110/fast15_no_idle --profile lio_error
 ```
 
+大 terrain 的四路线采集可直接传入批次根目录，通过右侧路线菜单分别查看完整 LIO 点云。
+每次显示所选路线的全部原始点，保留独立累计时间轴。示例：
+
+```bash
+/home/cjh/miniconda3/envs/env_isaaclab/bin/python -m common.scanning.isaac_view \
+  --root datasets/simulation/isaac_lio_20261117/captures --profile mixed \
+  --route route_001 --output outputs/scanning/isaac_lio_20261117/isaac_view
+```
+
+启动后保存 Isaac 原生总览截图、楼梯近景截图及 USD。相机根据场景范围定位，
+楼梯近景对准所选路线上下楼段的中间高度。紫红色是 Faster-LIO 配准结果，绿色是 Mesh 采样参考。
+
 ## IMU 抖动与 MID-360 盲区
 
-`lio_error`、`mixed` 启用白噪声、固定偏置、时间偏差和 OU 相关测量抖动。
-抖动相关时间 0.04 s，逐轴加速度 RMS 0.08 m/s²、角速度 RMS 0.008 rad/s。
-这些是当前仿真扰动参数，不是 ICM40609 标定值。保存理想 IMU 与带噪测量，
-用于对照。测量抖动不会偷偷改变真值轨迹或制造不一致的身体位移。
+所有 profile 的 IMU 使用严格 200 Hz 物理采样时刻。相邻时间戳为 5 ms，
+没有固定时间偏移或随机时间抖动。回放倍速只改变发送速度，不改变传感器时间。
+
+`lio_error`、`mixed` 的加速度采用白噪声、固定偏置和非线性相关噪声之和：
+`a_measured = a_ideal + bias + N(0, 0.03²) + 0.08*tanh(u)`，单位 m/s²。
+`u` 是相关时间 0.04 s、单位稳态方差的 OU 隐变量。非线性项每轴幅值不超过 0.08 m/s²，
+该幅值不是总噪声标准差。角速度沿用白噪声、固定偏置和 RMS 0.008 rad/s 的相关抖动。
+这些是仿真扰动参数，不是 ICM40609 标定值。保存理想 IMU 与带噪测量用于对照。
+测量噪声不改变真值轨迹。旧数据中的时间偏差保留在其历史配置中，新采集不再注入。
 coverage、dynamic、edge_returns 保留理想 IMU，作为独立成因对照。
 
 按 [Livox 官方参数](https://www.livoxtech.com/mid-360/specs) 约束近距盲区 0.1 m、
@@ -110,7 +149,7 @@ Mesh 遮挡通过最近命中自然产生，不把看不见的后方表面写成
 当前改为 pitch=0.785 rad 后，前向截面的最低射线约为-51.98°，同一高度下
 前方地面近区约0.63 m不可见。倾斜后的覆盖随方位角变化，不能把该数值当作
 所有方向相同的盲区半径。
-盲区不产生 keep_target=0 的点，只减少观测。完整 Mesh 仍可用于后续 RECON。
+盲区不产生 keep_target=0 的点，只减少观测。完整 Mesh 用于观测误差与覆盖率核对。
 当前批量采集预算为10,000射线/帧，比此前24,000条减少58.3%。有效回波通常
 少于候选射线数。历史config.actual.json和已采集数据不作覆盖修改。
 方向表、均匀时序及简化回波不构成完整硬件数字孪生。

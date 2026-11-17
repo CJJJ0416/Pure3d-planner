@@ -135,7 +135,7 @@ def main():
     cfg = read_json(args.config)
     output = workspace_path(cfg["output"])
     output.mkdir(parents=True, exist_ok=True)
-    logs = ROOT / "runs/wfc_data_generation"
+    logs = ROOT / "outputs/data_generation/wfc"
     logs.mkdir(parents=True, exist_ok=True)
     # 固定 Matplotlib 缓存目录，保证 headless 环境可复现
     os.environ.setdefault("MPLCONFIGDIR", str(ROOT / "datasets/cache/matplotlib"))

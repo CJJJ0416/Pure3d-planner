@@ -396,7 +396,9 @@ if (UNITTESTS)
     ENDIF()
 
     # Add test_headers and codegen_test_headers
-    add_subdirectory(tests)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/CMakeLists.txt")
+      add_subdirectory(tests)
+    endif()
 
     # Generating tests.stamp so that the test data are not always generated
     # set(data_timestamp ${PROJECT_SOURCE_DIR}/tests/tests_data.stamp)

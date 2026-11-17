@@ -8,4 +8,6 @@ list(REMOVE_ITEM slam_headers ${slam_excluded_headers})
 install(FILES ${slam_headers} DESTINATION include/gtsam_unstable/slam)
 
 # Add all tests
-add_subdirectory(tests)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/CMakeLists.txt")
+  add_subdirectory(tests)
+endif()

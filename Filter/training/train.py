@@ -13,6 +13,7 @@ from Filter.models.filter import FilterHead,geometry_mode
 from Filter.training.loss import regression_loss
 from Filter.training.metrics import Metrics
 from utils.pointcloud import read_json,write_json,workspace_path
+from utils.checkpoints import checkpoint_destination
 
 
 def loader(dataset,config,sampler=None):
@@ -26,6 +27,7 @@ def move(batch,device):
 
 
 def save_checkpoint(path,payload):
+    path=checkpoint_destination(path,'filter')
     tmp=path.with_suffix('.tmp');torch.save(payload,tmp);tmp.replace(path)
 
 

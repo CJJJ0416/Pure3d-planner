@@ -9,6 +9,6 @@
 - Frozen Utonia Tiny，原486维核心特征缓存，训练投影、几何分支和FilterHead。
 - 五组均衡SmoothL1，beta0.1。训练seed42，真实batch8，AdamW，50epoch。
 - GT保留分界固定0.5。验证选best与预测阈值，独立测试不调参。
-- runs/filter_local_10cm_v3保存best.pt、last.pt、记录和可视化。
+- runs/filter/filter_local_10cm_v3保存best.pt、last.pt、记录和可视化。
 
 局部几何及已知来源监督不证明完整新建筑上的泛化能力。真实ROT stair只做迁移查看。

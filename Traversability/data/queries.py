@@ -23,7 +23,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--pcd", type=Path, help="读取已保存的 Tomogram PCD；省略时订阅话题")
     parser.add_argument("--topic", default="/tomogram")
-    parser.add_argument("--output", type=Path, default=ROOT / "runs/tomogram_queries/query_coord.npy")
+    parser.add_argument("--output", type=Path, default=ROOT / "datasets/cache/tomogram_queries/query_coord.npy")
     args = parser.parse_args()
     if args.pcd:
         save_queries(args.output, read_pcd_xyz(args.pcd), str(args.pcd.resolve()))

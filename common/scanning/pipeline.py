@@ -15,6 +15,8 @@ def main():
     parser.add_argument('--output', type=Path)
     parser.add_argument('--frames', type=int)
     parser.add_argument('--profiles', nargs='+')
+    parser.add_argument('--playback-rate', type=float)
+    parser.add_argument('--ros-domain-id', type=int, default=78)
     parser.add_argument('--stages', nargs='+', default=['generate', 'replay', 'prepare', 'plot'])
     args = parser.parse_args()
     config = load_config(args.config)
@@ -22,6 +24,8 @@ def main():
         config['output'] = str(args.output)
     if args.frames is not None:
         config['frames'] = args.frames
+    if args.playback_rate is not None:
+        config['playback_rate'] = args.playback_rate
     root = Path(config['output']).resolve()
     root.mkdir(parents=True, exist_ok=True)
     actual = root / 'config.actual.json'
@@ -37,7 +41,7 @@ def main():
             script = '\n'.join([
                 'source /opt/ros/humble/setup.bash',
                 'source ' + quote(str(Path(config['lio_workspace'])/'install/local_setup.bash')),
-                'export ROS_DOMAIN_ID=78',
+                'export ROS_DOMAIN_ID=' + str(args.ros_domain_id),
                 'export ROS_LOG_DIR=' + quote(str(root/profile/'ros_logs')),
                 'export PYTHONPATH=' + quote(str(workspace)) + ':${PYTHONPATH}',
                 'exec /usr/bin/python3 -m common.scanning.replay --config ' + quote(str(actual)) +
@@ -48,6 +52,7 @@ def main():
                 subprocess.run([sys.executable, '-m', 'common.scanning.' + module,
                     '--root', str(root), '--profile', profile], cwd=workspace, check=True)
     write_json(root / 'pipeline.json', dict(profiles=profiles, stages=args.stages,
+        ros_domain_id=args.ros_domain_id,
         requested_frames=config.get('frames', round(config['duration_s']*config['scan_hz'])),
         training_started=False))
 

@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+ <xacro:macro name="a1_mid360" params="classic samples downsample">
+  <link name="laser_livox">
+   <visual><geometry><mesh filename="file://$(find a1_description)/meshes/livox_mid360.dae"/></geometry></visual>
+   <collision><geometry><box size="0.065 0.065 0.06"/></geometry></collision>
+   <inertial><mass value="0.265"/><inertia ixx="0.00017" ixy="0" ixz="0" iyy="0.00017" iyz="0" izz="0.00019"/></inertial>
+  </link>
+  <joint name="laser_livox_joint" type="fixed"><parent link="base"/><child link="laser_livox"/><origin xyz="0.2 0 0.18" rpy="0 0.785 0"/></joint>
+  <link name="livox_imu_link"><inertial><mass value="0.001"/><inertia ixx="0.000001" ixy="0" ixz="0" iyy="0.000001" iyz="0" izz="0.000001"/></inertial></link>
+  <joint name="livox_imu_joint" type="fixed"><parent link="laser_livox"/><child link="livox_imu_link"/><origin xyz="-0.011 -0.02329 0.04412" rpy="0 0 0"/></joint>
+  <xacro:if value="${classic}">
+   <gazebo reference="laser_livox_joint"><preserveFixedJoint>true</preserveFixedJoint></gazebo>
+   <gazebo reference="livox_imu_joint"><preserveFixedJoint>true</preserveFixedJoint></gazebo>
+   <gazebo reference="laser_livox">
+    <sensor type="ray" name="mid360_laser_sensor"><always_on>true</always_on><update_rate>10</update_rate><visualize>false</visualize>
+     <ray><scan><horizontal><samples>1</samples><resolution>1</resolution><min_angle>0</min_angle><max_angle>0</max_angle></horizontal></scan><range><min>0.1</min><max>40</max><resolution>0.01</resolution></range></ray>
+     <plugin name="mid360_points_plugin" filename="liblivox_laser_simulation.so">
+      <ros><namespace>/</namespace></ros><frame_name>laser_livox</frame_name>
+      <csv_file_name>$(find livox_laser_simulation)/scan_mode/mid360.csv</csv_file_name>
+      <samples>${samples}</samples><downsample>${downsample}</downsample>
+      <ray><scan><horizontal><samples>1</samples><resolution>1</resolution><min_angle>0</min_angle><max_angle>6.28318530718</max_angle></horizontal><vertical><samples>1</samples><resolution>1</resolution><min_angle>-0.0911</min_angle><max_angle>0.9987</max_angle></vertical></scan><range><min>0.1</min><max>40</max><resolution>0.01</resolution></range></ray>
+     </plugin>
+    </sensor>
+   </gazebo>
+   <gazebo reference="livox_imu_link">
+    <sensor type="imu" name="mid360_imu_sensor"><always_on>true</always_on><update_rate>1000</update_rate><visualize>false</visualize>
+     <plugin name="mid360_imu_plugin" filename="libgazebo_ros_imu_sensor.so"><ros><namespace>/livox</namespace><remapping>~/out:=imu</remapping></ros><frame_name>livox_imu_link</frame_name><initial_orientation_as_reference>false</initial_orientation_as_reference></plugin>
+    </sensor>
+   </gazebo>
+  </xacro:if>
+ </xacro:macro>
+</robot>

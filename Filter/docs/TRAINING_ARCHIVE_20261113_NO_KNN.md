@@ -1,6 +1,6 @@
 # Filter 无 KNN 训练档案：2026-11-13
 
-已完成 50 epoch、1400 次更新。配置为 `Filter/configs/train_scoring_no_knn.json`，结果为 `runs/filter_scoring_no_knn_20261113/`。官方 Utonia Tiny 冻结，复用原 333 盒缓存，评分头从零训练。Train/Val/Test seed、全点输入、分块、损失、batch、优化器和调度均沿用 11 月 12 日版本。
+已完成 50 epoch、1400 次更新。配置为 `Filter/configs/train_scoring_no_knn.json`，结果为 `runs/filter/filter_scoring_no_knn_20261113/`。官方 Utonia Tiny 冻结，复用原 333 盒缓存，评分头从零训练。Train/Val/Test seed、全点输入、分块、损失、batch、优化器和调度均沿用 11 月 12 日版本。
 
 本轮只去掉六维 KNN 统计，保留体素内三维相对坐标。几何分支为 `3→32→32`，其余投影和评分层结构保持相同。训练不读取 geometry 数组，推理不执行 KDTree 查询。旧 checkpoint 仍按九维分支加载。
 

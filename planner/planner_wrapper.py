@@ -8,7 +8,7 @@ from scipy.sparse.csgraph import connected_components
 from scipy.spatial import cKDTree
 
 from common.pointcloud_io import fields_xyz,read_pcd_fields
-from .geometry.voxel import voxel_mean,observed_voxel_field,support_clearance
+from .geometry.voxel import filter_dc_points,voxel_mean,observed_voxel_field,support_clearance
 from .geometry.dual_contouring import dual_contouring,outward_vertex_normals
 from .graph.adjacency import surface_graph,connect_step_surfaces
 from .graph.astar import NativeAStar
@@ -25,11 +25,16 @@ class DCSurfacePlanner:
         began=time.perf_counter();self.source_pcd=str(Path(path).resolve());cfg=self.config;self.setup={}
         started=time.perf_counter();raw=read_pcd_fields(path);coord=fields_xyz(raw)
         self.input_points=len(raw);self.setup['pcd_read_s']=time.perf_counter()-started
-        started=time.perf_counter();voxel=voxel_mean(coord,raw['trav_cost'],cfg.voxel_resolution)
+        started=time.perf_counter()
+        coord,cost,self.prefilter_info=filter_dc_points(coord,raw['trav_cost'],cfg.dc_input_cost_max)
+        self.setup['prefilter_s']=time.perf_counter()-started
+        started=time.perf_counter();voxel=voxel_mean(coord,cost,cfg.voxel_resolution)
+        del raw,coord,cost
         keep=np.ones(len(voxel['xyz']),dtype=bool)
         if cfg.roi_min is not None:
             keep=((voxel['xyz']>=cfg.roi_min)&(voxel['xyz']<=cfg.roi_max)).all(1)
         self.xyz=voxel['xyz'][keep];self.cost=voxel['cost'][keep]
+        if not len(self.xyz):raise ValueError('No DC points remain inside the configured ROI')
         self.original_point_count=int(voxel['counts'][keep].sum())
         self.setup['voxel_prepare_s']=time.perf_counter()-started
         field,origin,self.field_info=observed_voxel_field(self.xyz,cfg.voxel_resolution)
@@ -62,9 +67,26 @@ class DCSurfacePlanner:
         self.setup['cost_and_graph_s']=time.perf_counter()-started
         started=time.perf_counter();self._build_endpoint_index()
         self.setup['endpoint_index_s']=time.perf_counter()-started
-        self.optimizer=GravityGPMP(self.xyz,self.cost,cfg)
+        self._optimizer=None
         self.search=NativeAStar(self.build_folder);self.setup['native_compile_s']=self.search.compile_s
         self.setup['total_prepare_s']=time.perf_counter()-began
+
+    @property
+    def optimizer(self):
+        # DC/A* uses only filtered geometry. Keep the full original cost field
+        # for optional GPMP so removed high-cost points retain their penalty.
+        if self._optimizer is None:
+            if self.config.dc_input_cost_max is None:xyz,cost=self.xyz,self.cost
+            else:
+                raw=read_pcd_fields(self.source_pcd);coord=fields_xyz(raw)
+                coord,values,_=filter_dc_points(coord,raw['trav_cost'],None)
+                voxel=voxel_mean(coord,values,self.config.voxel_resolution)
+                keep=np.ones(len(voxel['xyz']),bool)
+                if self.config.roi_min is not None:
+                    keep=((voxel['xyz']>=self.config.roi_min)&(voxel['xyz']<=self.config.roi_max)).all(1)
+                xyz,cost=voxel['xyz'][keep],voxel['cost'][keep]
+            self._optimizer=GravityGPMP(xyz,cost,self.config)
+        return self._optimizer
 
     def _build_endpoint_index(self):
         """每个来源体素固定一个最近DC候选，距离相同时取原顶点编号最小者。"""
@@ -76,6 +98,7 @@ class DCSurfacePlanner:
         distance2=np.einsum('ij,ij->i',delta,delta)
         order=np.lexsort((vertices,distance2,owners))
         self.anchor_voxel_indices,first=np.unique(owners[order],return_index=True)
+        if not len(self.anchor_voxel_indices):raise ValueError('No upward-facing DC endpoint supports remain after filtering')
         self.anchor_node_indices=self.endpoint_nodes[order[first]]
         self.anchor_tree=cKDTree(self.xyz[self.anchor_voxel_indices])
 

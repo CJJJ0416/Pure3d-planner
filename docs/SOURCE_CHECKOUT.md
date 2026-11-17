@@ -2,6 +2,10 @@
 
 Pure3D 主仓库管理网络框架、数据生成、教师监督、点云 I/O、规划与可视化源码，以及运行必需的 MID-360 方向表和模型资产。datasets、runs、weights、缓存、编译产物和个人编辑器配置保留本地，不随源码提交。
 
+实验目录 `experiments/` 和一次性测试/验证脚本不随源码发布。原先位于实验目录、被正式训练调用的条件采样与指标函数已移入 `Traversability/data`、`Traversability/training`。Recon 模块已从当前源码移除。
+
+Gazebo 与 SCAN 使用 `common/unitree_gazebo`、`common/quadruped_ros2_control` 和 `common/SCAN-Planner` 中的普通源码。SCAN 保留上游 LICENSE、NOTICE 和来源说明，不作为嵌套 Gitlink 提交。仿真运行所需的控制策略和传感器资产保留，训练得到的 Filter/Cost checkpoint 仍需单独准备。
+
 ## PTv3 / Utonia Tiny
 
 `utils/PointTransformerV3` 保持现有的固定 Git 子模块，来源由根目录 .gitmodules 声明。检出主仓库后执行：
@@ -20,10 +24,10 @@ common/geneator/terrain-generator 的运行源码按快照纳入主仓库，包�
 
 ## 运行环境与本地数据
 
-- 模型训练和推理使用 Pure3D Python 环境。几何依赖见 Reconstruction/requirements.txt 和 common/geneator/requirements-wfc.txt。
+- 模型训练和推理使用 Pure3D Python 环境。几何依赖见 common/geneator/requirements-wfc.txt。
 - 逐点扫描使用 common/scanning/requirements.txt 中的 Warp。Faster-LIO 从 common/scanning/config.json 指定的 ROS 2 underlay 加载，不随本仓库分发。
 - Isaac Sim 原生查看使用独立的 env_isaaclab 环境。ROS/RViz 使用加载 Humble 后的系统 Python。
 - common/Mid360_imu_sim 提供方向表和模型资产。现有插件为瞬时扫描，新滚动扫描实现位于 common/scanning，不将瞬时 offset_time=0 的消息当作真实滚动测量。
-- 本地 seen2scene 是独立参考 checkout，当前 Filter、Reconstruction 和 Traversability 不导入它。其权重、结果和本地改动保留原样，本次源码提交不收录该目录。
+- 本地 seen2scene 是独立参考 checkout，当前 Filter 和 Traversability 不导入它。其权重、结果和本地改动保留原样，本次源码提交不收录该目录。
 
 本地实验档案可保留 runs 下的路径作为证据定位。检出源码不等于已经拥有这些数据或权重，也不会自动启动训练、采集或下载模型。

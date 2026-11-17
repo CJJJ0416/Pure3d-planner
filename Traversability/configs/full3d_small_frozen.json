@@ -3,7 +3,7 @@
   "seed": 2026111400,
   "fixed_data": "datasets/cost_sliced_tiny_local50_20261113",
   "data": "datasets/cost_full3d_small_frozen_e50_s2026111400",
-  "output": "runs/traversability/cost_full3d_small_frozen_e50_s2026111400",
+  "output": "runs/cost/cost_full3d_small_frozen_e50_s2026111400",
   "generator_config": "common/geneator/wfc_capability_dr.json",
   "generator_python": "/home/cjh/miniconda3/envs/pure3d-ptv3/bin/python",
   "geometry_python": "/home/cjh/glocal2-nav/.venv/bin/python",

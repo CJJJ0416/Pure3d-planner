@@ -1,8 +1,8 @@
 {
-  "output": "runs/traversability/r4_controlled_fit_v5",
-  "source_checkpoint": "runs/traversability/cost_parameter_decoupling_v4/best.pt",
+  "output": "runs/cost/r4_controlled_fit_v5",
+  "source_checkpoint": "weights/cost/cost_parameter_decoupling_v4/best.pt",
   "source_pcd": "datasets/wfc_unseen_20261127/scene_20261127/terrain_downsampled.pcd",
-  "reference_run": "runs/planner/r4_replan_decoupling_v4_20261111",
+  "reference_run": "outputs/planner/r4_replan_decoupling_v4_20261111",
   "geometry_python": "/home/cjh/glocal2-nav/.venv/bin/python",
   "neural_python": "/home/cjh/miniconda3/envs/pure3d-ptv3/bin/python",
   "seed": 20261111,

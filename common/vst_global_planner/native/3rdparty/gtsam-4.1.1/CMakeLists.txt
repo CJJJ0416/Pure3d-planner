@@ -67,7 +67,9 @@ add_subdirectory(CppUnitLite)
 add_subdirectory(gtsam)
 
 # Build Tests
-add_subdirectory(tests)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/CMakeLists.txt")
+  add_subdirectory(tests)
+endif()
 
 # Build examples
 add_subdirectory(examples)

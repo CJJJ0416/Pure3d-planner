@@ -13,6 +13,7 @@ from common.pointcloud_io import read_pcd_xyz, write_pcd
 from Filter.data.boxes import export_boxes, collect_boxes
 from Filter.data.groups import loss_groups
 from utils.pointcloud import read_json, write_json
+from .training_data import export_reference_windows
 
 
 def describe(values):
@@ -49,7 +50,8 @@ def prepare(root, profile):
     write_json(folder / 'map_from_lio.json', dict(matrix=transform.tolist(), anchor_stamp_s=first,
         method='one rigid transform from first registered IMU pose; no per-frame correction or ICP'))
     chunks = {key: [] for key in ['coord', 'truth_coord', 'frame_index', 'ray_id', 'offset_ns',
-                                 'face_id', 'instance_id', 'semantic_id', 'source_role', 'edge_mixed']}
+                                 'face_id', 'instance_id', 'semantic_id', 'source_role', 'edge_mixed',
+                                 'explicit_ghost', 'ghost_pull_m', 'trajectory_id']}
     offsets = [0]
     for row in records:
         frame = row['frame']
@@ -61,9 +63,14 @@ def prepare(root, profile):
         role = np.zeros(count, np.uint8)
         role[raw['semantic_id'] >= 8] = 5
         role[raw['edge_mixed']] = 2
+        ghost = raw['explicit_ghost'] if 'explicit_ghost' in raw else np.zeros(count, bool)
+        role[ghost] = 6
         role[raw['dynamic_instance'] > 0] = 7
         values = dict(coord=(registered['coord'] @ align_r.T + align_p).astype(np.float32),
             truth_coord=raw['truth_coord'], frame_index=np.full(count, frame, np.int32), source_role=role,
+            explicit_ghost=ghost,
+            trajectory_id=np.full(count, config.get('trajectory_index', 0), np.int32),
+            ghost_pull_m=raw['ghost_pull_m'] if 'ghost_pull_m' in raw else np.zeros(count, np.float32),
             **{key: raw[key] for key in ['ray_id', 'offset_ns', 'face_id', 'instance_id', 'semantic_id', 'edge_mixed']})
         for key in chunks:
             chunks[key].append(values[key])
@@ -91,11 +98,13 @@ def prepare(root, profile):
     teacher_s = perf_counter() - teacher_started
     comparison_started = perf_counter()
     clean = read_pcd_xyz(root / 'clean.pcd')
-    pcd_distance, nearest = cKDTree(clean).query(xyz, workers=8)
-    # Reverse direction describes missing coverage, not bad observed points.
-    reverse_distance, _ = cKDTree(attributes['truth_coord']).query(clean, workers=8)
-    attributes['gt_pcd_distance_m'] = pcd_distance.astype(np.float32)
-    attributes['gt_pcd_index'] = nearest.astype(np.int32)
+    diagnostics = config.get('gt_pcd_diagnostics', True)
+    if diagnostics:
+        pcd_distance, nearest = cKDTree(clean).query(xyz, workers=8)
+        # Reverse direction describes missing coverage, not bad observed points.
+        reverse_distance, _ = cKDTree(attributes['truth_coord']).query(clean, workers=8)
+        attributes['gt_pcd_distance_m'] = pcd_distance.astype(np.float32)
+        attributes['gt_pcd_index'] = nearest.astype(np.int32)
     comparison_s = perf_counter() - comparison_started
     save_started = perf_counter()
     write_pcd(folder / 'rough.pcd', xyz)
@@ -118,12 +127,13 @@ def prepare(root, profile):
     block_started = perf_counter()
     metadata = read_json(root / 'scene.json')
     metadata.update(scene_id=f'{root.name}_{profile}', geometry_group_id=f"fasterlio_{config['seed']}",
-                    split='example', seed=config['seed'])
+                    split=config.get('split', 'example'), seed=config['seed'])
     write_json(folder / 'scene.json', metadata)
     window = dict(core_size_m=config['core_size_m'], context_margin_m=config['context_margin_m'],
                   grid_shift_m=[0, 0, 0], export_individual_pcd_boxes=False)
     box = export_boxes(folder, 0, attributes, clean, {}, window, config['seed'])
     collect_boxes(folder)
+    pair = export_reference_windows(folder, attributes, clean, box)
     block_s = perf_counter() - block_started
     index = np.load(folder / 'windows_000_index.npy')
     core = np.load(folder / 'windows_000_core.npy')
@@ -139,11 +149,14 @@ def prepare(root, profile):
         registered_frames=len(records), points=len(xyz), boxes=len(box['windows']),
         static_points=int(static.sum()), dynamic_points=int((~static).sum()),
         mixed_return_points=int(attributes['edge_mixed'].sum()),
-        scan_to_mesh=describe(mesh_distance[static]), scan_to_gt_pcd=describe(pcd_distance[static]),
+        explicit_ghost_points=int(attributes['explicit_ghost'].sum()),
+        training_pair=pair,
+        scan_to_mesh=describe(mesh_distance[static]), scan_to_gt_pcd=describe(pcd_distance[static]) if diagnostics else None,
         truth_fused_to_mesh=describe(truth_distance[static]),
-        gt_pcd_to_truth_fused=describe(reverse_distance),
+        gt_pcd_to_truth_fused=describe(reverse_distance) if diagnostics else None,
         paired_same_ray_lio_displacement=describe(mapping_displacement),
-        gt_sampling_excess_mean_m=float(np.mean(pcd_distance-mesh_distance)),
+        gt_sampling_excess_mean_m=float(np.mean(pcd_distance-mesh_distance)) if diagnostics else None,
+        gt_pcd_diagnostics_enabled=diagnostics,
         keep_target=dict(mean=float(target.mean()), low_02=float(np.mean(target < .2)),
                          high_08=float(np.mean(target >= .8))),
         trajectory=dict(position_rmse_m=float(np.sqrt(np.mean(error**2))),
@@ -163,7 +176,7 @@ def prepare(root, profile):
     write_json(folder / 'replay.json', replay)
     write_json(folder / 'metrics.json', report)
     print('PREPARED', profile, 'points', len(xyz), 'mesh MAE m', report['scan_to_mesh']['mean_m'],
-          'GT PCD MAE m', report['scan_to_gt_pcd']['mean_m'], flush=True)
+          'GT PCD diagnostics', diagnostics, flush=True)
 
 
 def main():

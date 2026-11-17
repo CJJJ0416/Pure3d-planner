@@ -1,4 +1,4 @@
-"""ROS 2 real-time replay into an unmodified external Faster-LIO process.
+"""ROS 2 timestamp-preserving replay into an unmodified Faster-LIO process.
 
 The local LIO's PointBodyToWorld drops curvature. Its dense output retains the
 input's strictly time-sorted row order. We join by unique input offsets and
@@ -8,6 +8,7 @@ Run with system Python after sourcing ROS and the livox_ws underlay.
 """
 import argparse
 import json
+import os
 from pathlib import Path
 import signal
 import subprocess
@@ -18,6 +19,7 @@ import yaml
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy
+from rclpy.serialization import serialize_message
 from sensor_msgs.msg import Imu, PointCloud2
 from nav_msgs.msg import Odometry
 from rosgraph_msgs.msg import Clock
@@ -54,6 +56,7 @@ class Replay(Node):
         self.registered = folder / 'registered'
         self.registered.mkdir(exist_ok=True)
         self.frames, self.odometry, self.callback_s = {}, [], 0.
+        self.last_completed_frame = -1
         qos = QoSProfile(depth=2048, reliability=ReliabilityPolicy.RELIABLE)
         self.lidar = self.create_publisher(CustomMsg, '/pure3d_scan/lidar', qos)
         self.imu = self.create_publisher(Imu, '/pure3d_scan/imu', qos)
@@ -66,6 +69,8 @@ class Replay(Node):
     def odom(self, msg):
         p, q = msg.pose.pose.position, msg.pose.pose.orientation
         self.odometry.append([seconds(msg.header), p.x, p.y, p.z, q.x, q.y, q.z, q.w])
+        end = seconds(msg.header) - self.config['time_origin_s']
+        self.last_completed_frame = max(self.last_completed_frame, int(np.argmin(abs(self.end_times-end))))
 
     def cloud(self, msg):
         started = time.perf_counter()
@@ -85,16 +90,15 @@ class Replay(Node):
             point_mapping='unique input offset_ns order; dense count and reflectivity sequence checked')
         self.callback_s += time.perf_counter() - started
 
-    def run(self):
-        imu = dict(np.load(self.folder / 'imu.npz'))
+    def prepare_messages(self):
+        """Pack LiDAR CDR once before timed replay, retaining only source indices."""
+        started = time.perf_counter()
         origin = self.config['time_origin_s']
-        nimu = 0
-        start = time.perf_counter()
-        maximum_lag = 0.
+        messages = []
         for row in self.records:
             raw = dict(np.load(self.folder / row['path']))
             frame = row['frame']
-            self.raw[frame] = raw
+            self.raw[frame] = {key: raw[key] for key in ['ray_id', 'offset_ns', 'reflectivity']}
             message = CustomMsg()
             message.header.frame_id = 'scan_lidar'
             for name, value in stamp(origin + row['start_s']).items():
@@ -104,11 +108,33 @@ class Replay(Node):
             message.points = [CustomPoint(offset_time=int(offset), x=float(p[0]), y=float(p[1]),
                 z=float(p[2]), reflectivity=int(reflectivity), tag=16, line=0)
                 for p, offset, reflectivity in zip(raw['coord'], raw['offset_ns'], raw['reflectivity'])]
+            messages.append(serialize_message(message))
+        return messages, time.perf_counter()-started
+
+    def run(self):
+        imu = dict(np.load(self.folder / 'imu.npz'))
+        messages, prepack_wall = self.prepare_messages()
+        origin = self.config['time_origin_s']
+        rate = self.config.get('playback_rate', 1.)
+        nimu = 0
+        start = time.perf_counter()
+        maximum_lag = 0.
+        flow_control_wait = 0.
+        window = self.config.get('max_inflight_scans', 32)
+        for row, message in zip(self.records, messages):
+            frame = row['frame']
+            # Bound the IMU + LiDAR window together. With long 10x streams,
+            # independent DDS writer queues otherwise overrun at different
+            # rates and LIO can receive a scan without its IMU interval.
+            wait_start = time.perf_counter()
+            while frame-self.last_completed_frame > window:
+                rclpy.spin_once(self, timeout_sec=.01)
+            flow_control_wait += time.perf_counter()-wait_start
             # Deliver the IMU bracket before the completed LiDAR frame.
             end = row['end_s'] + .006
             while nimu < len(imu['time']) and imu['time'][nimu] <= end:
                 event_time = float(imu['time'][nimu])
-                delay = event_time - (time.perf_counter() - start)
+                delay = event_time/rate - (time.perf_counter() - start)
                 if delay > 0:
                     time.sleep(delay)
                 maximum_lag = max(maximum_lag, -delay)
@@ -144,15 +170,25 @@ class Replay(Node):
             self.imu.publish(item)
             nimu += 1
         drain = time.perf_counter()
-        while time.perf_counter() - drain < 5:
+        send_wall = drain-start
+        while not (self.records[-1]['frame'] in self.frames and self.odometry and
+                   abs(self.odometry[-1][0]-origin-self.records[-1]['end_s']) < 1e-6):
             rclpy.spin_once(self, timeout_sec=.05)
         wall = time.perf_counter() - start
         np.save(self.folder / 'lio_odometry.npy', np.asarray(self.odometry))
         save_json(self.folder / 'registered.json', [self.frames[k] for k in sorted(self.frames)])
         missing = [row['frame'] for row in self.records if row['frame'] not in self.frames]
         save_json(self.folder / 'replay.json', dict(input_frames=len(self.records),
+            ros_domain_id=int(os.environ.get('ROS_DOMAIN_ID', '0')),
             registered_frames=len(self.frames), missing_frames=missing, imu_messages=nimu,
-            intended_playback_rate=1., wall_s=wall, maximum_schedule_lag_s=maximum_lag,
+            intended_playback_rate=rate, prepack_wall_s=prepack_wall,
+            send_wall_s=send_wall, drain_wall_s=wall-send_wall,
+            max_inflight_scans=window, flow_control_wait_s=flow_control_wait,
+            simulated_sequence_s=self.records[-1]['end_s'],
+            actual_send_rate=self.records[-1]['end_s']/send_wall,
+            wall_s=prepack_wall+wall, stream_wall_s=wall, maximum_schedule_lag_s=maximum_lag,
+            lidar_transport='prepacked CDR bytes via rclpy publish_raw',
+            completion='final LiDAR frame and its odometry received',
             registered_export_s=self.callback_s, odometry_messages=len(self.odometry),
             provenance='unmodified dense LIO preserves strictly time-sorted input rows; output curvature is dropped',
             external_pcd_save_enabled=False))
@@ -162,8 +198,11 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--config', type=Path, required=True)
     parser.add_argument('--profile', required=True)
+    parser.add_argument('--playback-rate', type=float, help='Wall-clock sending multiplier, sensor timestamps unchanged')
     args = parser.parse_args()
     config = json.loads(args.config.read_text())
+    if args.playback_rate is not None:
+        config['playback_rate'] = args.playback_rate
     folder = Path(config['output']).resolve() / args.profile
     ws = Path(config['lio_workspace'])
     parameters = yaml.safe_load((ws / 'src/faster-lio/config/mid360_sim.yaml').read_text())

@@ -165,7 +165,7 @@ def scoring_results(run,xyz_reference=None):
 
 
 def main():
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--run',type=Path,default=Path('runs/filter_scoring_mesh_full_20261112'))
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--run',type=Path,default=Path('runs/filter/filter_scoring_mesh_full_20261112'))
     p.add_argument('--threshold-plots',action='store_true',help='Historical threshold-selected evaluations with all three test suites')
     p.add_argument('--prediction',type=Path,help='Render an existing real-scan prediction directory')
     p.add_argument('--output',type=Path)

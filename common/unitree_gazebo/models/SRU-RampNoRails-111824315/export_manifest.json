@@ -1,0 +1,40 @@
+{
+  "source_obj": "/home/cjh/glocal2-nav/isaac_training/data/sru_single_ascent_ramp_20261028/generation/terrain.obj",
+  "source_scene": "/home/cjh/glocal2-nav/isaac_training/data/sru_single_ascent_ramp_20261028/generation/scene.json",
+  "source_sha256": "d883712efc557deb3efb1710b3411a69cd9f67e60ba8515ba94a5dcdc09ea91f",
+  "scene_sha256": "bcb7f4edfe36ecfde5e146d994e2f5ecca44d25b5fb79e38cdbb392b16af353d",
+  "dae_sha256": "b0621135f97a18503838ff3673058a28aa0a2426734bf6436bfec2b07e7477e2",
+  "seed": 111824315,
+  "source_name": "train_u_courtyard_01_ramp_no_rails",
+  "model_name": "SRU-RampNoRails-111824315",
+  "vertices": 1299,
+  "triangles": 2614,
+  "bounds_m": [
+    [
+      -9.10422134,
+      -15.10187721,
+      -0.16
+    ],
+    [
+      9.10422134,
+      15.10187721,
+      3.53653836
+    ]
+  ],
+  "metre_scale": 1,
+  "up_axis": "Z_UP",
+  "world_transform": "identity",
+  "vertex_roundtrip_max_error_m": 0,
+  "triangle_indices_exact": true,
+  "source_degenerate_triangles": 0,
+  "added_ground_plane": false,
+  "visual_collision_same_mesh": true,
+  "suggested_a1_spawn_xyz_yaw": [
+    -1.0215162940345284,
+    -7.237344959137292,
+    0.5,
+    -1.4871114903730263
+  ],
+  "gazebo_physics": "ODE",
+  "source_m0_dynamics_transferred": false
+}

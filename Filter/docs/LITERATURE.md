@@ -110,4 +110,4 @@ rough XYZ
 
 本地接口已核对：[多尺度 upcast](../../utils/PointTransformerV3/src/point_transformer_v3/heads.py) 与 [prepare 返回的 inverse](../../utils/PointTransformerV3/src/point_transformer_v3/preprocess.py)。体素特征恢复是索引操作，不会产生缺失几何，也不会让预训练特征自动拥有本项目的二元标签含义。
 
-现有 [inspect_floating.py](../../Reconstruction/visualization/inspect_floating.py) 是几何可疑度可视化工具，不是已训练 Filter，也不作为本方案的真值来源。
+几何可疑度可视化工具不作为已训练 Filter 或真值来源。

@@ -2,7 +2,7 @@
   "status": "implemented",
   "data": "datasets/filter_scoring_voxel_20261113",
   "cache": "datasets/cache/filter_scoring_voxel_20261113",
-  "output": "runs/filter_scoring_voxel_20261113",
+  "output": "runs/filter/filter_scoring_voxel_20261113",
   "dataset_config": "Filter/configs/scoring_voxel.json",
   "device": "cuda:0",
   "seed": 42,

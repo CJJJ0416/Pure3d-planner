@@ -1,5 +1,9 @@
 # MID360 + IMU simulation for ROS 2 Humble / Gazebo Classic 11
 
+Pure3D terrain-generator simulation: see [Gazebo integration](../unitree_gazebo/README.md).
+From the Pure3D workspace use `./build_gazebo.sh`, then `./run_gazebo.sh`.
+Start mapping separately with `./run_faster_lio.sh` after the robot is stationary.
+
 Active A1 integration is in a1_description/xacro/mid360.xacro, called from robot.xacro. The plugin has been ported from ROS 1 to gazebo_ros::Node and native ROS 2 publishers. It retains the 800000-row CSV angular pattern and uses isolated ODE ray collision spaces.
 
 ## Run with A1

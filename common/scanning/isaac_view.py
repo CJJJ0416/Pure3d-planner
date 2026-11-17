@@ -16,17 +16,27 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--root', type=Path, required=True)
     parser.add_argument('--profile', default='lio_error')
+    parser.add_argument('--route', default='route_001', help='Initially displayed route when --root is a terrain batch')
+    parser.add_argument('--output', type=Path, help='Native screenshots, USD and viewer state')
     args = parser.parse_args()
     root = args.root.resolve()
+    batch_root = root if (root/'batch.actual.json').exists() else None
+    route_roots = sorted(batch_root.glob('route_*')) if batch_root else [root]
+    if batch_root:
+        root = batch_root/args.route
     folder = root/args.profile
-    output = folder/'isaac_view'
-    output.mkdir(exist_ok=True)
+    output = args.output.resolve() if args.output else folder/'isaac_view'
+    output.mkdir(parents=True, exist_ok=True)
     config = read_json(root/'config.actual.json')
     # Load full XYZ once. No original point is removed, moved or merged.
     scan = read_pcd_xyz(folder/'rough.pcd')
     gt = read_pcd_xyz(root/'clean.pcd')
     increments = dict(np.load(folder/'incremental_index.npz'))
     duration = read_json(folder/'generation.json')['frames']/config['scan_hz']
+    mesh_bounds = np.asarray(read_json(root/'scene.json')['bounds'])
+    centre = mesh_bounds.mean(0)
+    span = float(np.max(mesh_bounds[1]-mesh_bounds[0]))
+    route_name = root.name
     state = dict(pid=os.getpid(), status='starting', scan_points=len(scan), gt_points=len(gt),
         coordinates='map, metres, Z up', source_scan=str(folder/'rough.pcd'),
         source_gt=str(root/'clean.pcd'), source_positions_unchanged=True, downsampling=False)
@@ -40,6 +50,9 @@ def main():
     try:
         import omni.usd
         import omni.ui as ui
+        import carb
+        carb.settings.get_settings().set('/app/viewport/grid/enabled', False)
+        carb.settings.get_settings().set('/app/viewport/defaults/guide/grid/visible', False)
         from isaacsim.core.utils.viewports import set_camera_view
         from omni.kit.viewport.utility import get_active_viewport, capture_viewport_to_file
         from pxr import UsdGeom, UsdLux, Gf, Vt
@@ -81,7 +94,17 @@ def main():
             UsdGeom.Imageable(prim.GetPrim()).MakeVisible() if value else UsdGeom.Imageable(prim.GetPrim()).MakeInvisible()
 
         def camera(detail=False):
-            eye, target = ([5., 5., 4.], [1., 1.9, 1.]) if detail else ([11., -13., 12.], [0., .3, 1.])
+            if detail:
+                truth = dict(np.load(root/'truth_trajectory.npz'))
+                position = truth['position']
+                low, high = position[:,2].min(), position[:,2].max()
+                middle = (position[:,2] > low + .25*(high-low)) & (position[:,2] < low + .75*(high-low))
+                target = np.median(position[middle], axis=0)
+                target[2] -= config['sensor_height_m']
+                eye = target + np.array([6., -7., 5.])
+            else:
+                target = centre
+                eye = centre + span*np.array([.55, -.75, .6])
             set_camera_view(eye=np.array(eye), target=np.array(target), camera_prim_path='/OmniverseKit_Persp')
 
         def toggle_row(text, prim, enabled):
@@ -96,22 +119,42 @@ def main():
             frame_count = np.searchsorted(relative, current['seconds'], side='right')
             count = int(increments['offsets'][frame_count])
             scan_prim.GetPointsAttr().Set(Vt.Vec3fArray.FromNumpy(scan[:count]))
-            label.text = (f"Elapsed: {current['seconds']:.2f} / {duration:.1f} s\n"
+            label.text = (f"{route_name} | elapsed: {current['seconds']:.2f} / {duration:.1f} s\n"
                           f"LIO frames: {frame_count} | scan: {count:,}\n"
                           f"GT: {len(gt):,} | all original points\nMap coordinates, metres, Z up")
             current['dirty'] = False
             state.update(status='open', displayed_scan_points=count, displayed_gt_points=len(gt),
-                         elapsed_s=current['seconds'], lio_frames=int(frame_count))
+                         elapsed_s=current['seconds'], lio_frames=int(frame_count), route=route_name)
             write_json(output/'state.json', state)
+
+        def select_route(index):
+            nonlocal root, folder, scan, increments, duration, config, route_name
+            current['playing'] = False
+            root = route_roots[index]
+            folder = root/args.profile
+            route_name = root.name
+            scan = read_pcd_xyz(folder/'rough.pcd')
+            increments = dict(np.load(folder/'incremental_index.npz'))
+            config = read_json(root/'config.actual.json')
+            duration = read_json(folder/'generation.json')['frames']/config['scan_hz']
+            slider_widget.max = duration
+            slider.set_value(duration)
+            current.update(seconds=duration, dirty=True)
+            state.update(source_scan=str(folder/'rough.pcd'), scan_points=len(scan))
 
         with window.frame:
             with ui.VStack(spacing=8):
                 ui.Label('Magenta: registered scan\nGreen: Mesh-sampled GT', height=46)
+                if batch_root:
+                    selector = ui.ComboBox(route_roots.index(root), *[p.name for p in route_roots], height=26)
+                    selector.model.add_item_changed_fn(lambda model, item:
+                        select_route(model.get_item_value_model().as_int))
                 toggle_row('Scan / magenta', scan_prim, True)
                 toggle_row('GT PCD / green', gt_prim, True)
                 toggle_row('Reference Mesh', terrain, False)
                 label = ui.Label('', height=95, word_wrap=True)
-                slider = ui.FloatSlider(min=0., max=duration, height=25).model
+                slider_widget = ui.FloatSlider(min=0., max=duration, height=25)
+                slider = slider_widget.model
                 slider.set_value(duration)
                 slider.add_value_changed_fn(lambda m: current.update(seconds=m.as_float, dirty=True))
                 ui.Button('Play / pause incremental scan', height=28,
@@ -129,13 +172,23 @@ def main():
         camera()
         show()
         stage.Export(str(output/'scan_gt_overlay.usdc'))
-        for _ in range(20):
-            app.update()
-        capture = capture_viewport_to_file(get_active_viewport(), file_path=str(output/'overlay_native.png'))
-        completion = asyncio.ensure_future(capture.wait_for_result(0))
-        while not completion.done():
-            app.update()
-        completion.result()
+
+        def screenshot(name):
+            for _ in range(20):
+                app.update()
+            capture = capture_viewport_to_file(get_active_viewport(), file_path=str(output/name))
+            completion = asyncio.ensure_future(capture.wait_for_result(0))
+            while not completion.done():
+                app.update()
+            completion.result()
+
+        screenshot('overlay_native.png')
+        visibility(gt_prim, False)
+        screenshot('scan_only_native.png')
+        visibility(gt_prim, True)
+        camera(True)
+        screenshot('stair_detail_native.png')
+        camera()
         print('ISAAC_SCAN_OVERLAY_READY', state, flush=True)
         tick = time.monotonic()
         while app.is_running():

@@ -1,4 +1,5 @@
 """Report frozen pretrained-encoder training on complete 3-D geometry."""
+from Traversability.data.rotating import archive_root
 import argparse
 from pathlib import Path
 
@@ -70,7 +71,7 @@ def report(output):
     rotations = [read_json(p) for p in sorted((output / 'rotations').glob('*.json'))]
     state = read_json(data / 'generation.json')
     storage = dict(active_seeds=state['seeds'], active_bytes=disk_bytes(data / 'active'),
-        fixed_cache_bytes=disk_bytes(data / 'fixed'), archive_bytes=disk_bytes(output / 'scene_archive'),
+        fixed_cache_bytes=disk_bytes(data / 'fixed'), archive_bytes=disk_bytes(archive_root(config) / 'scene_archive'),
         rotations=len(rotations),
         all_prior_pools_removed=all(r['previous_active_removed'] and r['previous_wfc_cache_removed'] for r in rotations))
     assert len(rotations) == summary['generations'] - 1 and storage['all_prior_pools_removed']

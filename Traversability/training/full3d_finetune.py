@@ -1,4 +1,5 @@
 """Online complete-3D cost training with Tiny gradients from the first update."""
+from Traversability.data.rotating import archive_root
 import argparse
 from collections import defaultdict
 from copy import deepcopy
@@ -153,7 +154,7 @@ def prepare_pool(config,generation,completed,validation):
         meta=read_json(root/'manifest.json')
         state.update(geometry_mapped=True,training_blocks=sum(r['split']=='train' for r in meta['blocks']),
             temporary_bytes=disk_bytes(root/'active'),maps=reports,features_cached=False)
-        write_json(path,state);write_json(output/'generations'/f'{generation:02d}.json',state)
+        write_json(path,state);write_json(archive_root(config)/'generations'/f'{generation:02d}.json',state)
     return state
 
 
@@ -297,7 +298,7 @@ def train(config,resume=False,stop_after_epoch=None):
         maximum_encoder_change=max(float(abs(last['encoder'][k]-initial_state['encoder'][k]).max()) for k in changed),
         optimizer_steps=sorted({int(v['step']) for v in last['optimizer']['state'].values()}),
         final_learning_rates={g['name']:g['lr'] for g in last['optimizer']['param_groups']},
-        scenes_archived=len(list((output/'scene_archive').glob('scene_*'))),rotations_verified=len(list((output/'rotations').glob('*.json'))))
+        scenes_archived=len(list((archive_root(config)/'scene_archive').glob('scene_*'))),rotations_verified=len(list((output/'rotations').glob('*.json'))))
     assert check['expected_epochs_complete'] and check['same_update_count_as_frozen'] and check['encoder_is_trained']
     write_json(output/'training_verification.json',check)
 

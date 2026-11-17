@@ -34,25 +34,6 @@
     "continuous_targets": "implemented"
   },
   "next_step": "Use the relative-only scorer as the frozen reference and improve the supervised dataset before new training.",
-  "reconstruction_interface": {
-    "plan": "Reconstruction/configs/plan.json",
-    "coordinate_frame": "map",
-    "units": "m",
-    "outputs": [
-      "keep_score",
-      "keep_indices",
-      "xyz_keep",
-      "shared_voxel_features",
-      "inverse",
-      "point_index",
-      "window_transform"
-    ],
-    "feature_channels": 486,
-    "feature_selection": "F_voxel[inverse[keep_indices]]",
-    "freeze_filter_before_reconstruction": true,
-    "reencode_filtered_pcd": false,
-    "status": "planned_not_implemented"
-  },
   "implemented_entrypoints": {
     "prepare": "Filter.data.local",
     "generate_batches": "Filter.data.scoring",
@@ -91,17 +72,17 @@
     }
   },
   "trained_model": {
-    "checkpoint": "runs/filter_scoring_no_knn_20261113/best.pt",
+    "checkpoint": "weights/filter/filter_scoring_no_knn_20261113/best.pt",
     "epoch": 34,
     "step": 952,
     "sha256": "27b417b904787aede5703e47f6ab96d6affa49d1a93f70bfa6ecb2d2da918d1a",
     "threshold": null,
-    "run": "runs/filter_scoring_no_knn_20261113"
+    "run": "runs/filter/filter_scoring_no_knn_20261113"
   },
   "reference_models": {
     "knn_archive": {
-      "run": "runs/filter_scoring_mesh_full_20261112",
-      "checkpoint": "runs/filter_scoring_mesh_full_20261112/best.pt",
+      "run": "runs/filter/filter_scoring_mesh_full_20261112",
+      "checkpoint": "weights/filter/filter_scoring_mesh_full_20261112/best.pt",
       "epoch": 24,
       "step": 672,
       "sha256": "e258833d2e4149ce8503bb1ecbf8ace89c49b970be6cfc8430957f2e99163b90",

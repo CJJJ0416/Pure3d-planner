@@ -1,4 +1,5 @@
 """Fixed-building validation, response curves and full test PCD after scene rotation."""
+from Traversability.data.rotating import archive_root
 import argparse
 from pathlib import Path
 
@@ -93,7 +94,7 @@ def main():
     rotations=[read_json(p) for p in sorted((output/'rotations').glob('*.json'))]
     state=read_json(workspace_path(config['data'])/'generation.json')
     storage=dict(rotations=rotations,active_seeds=state['seeds'],active_bytes=disk_bytes(workspace_path(config['data'])/'active'),
-                 archive_bytes=disk_bytes(output/'scene_archive'),
+                 archive_bytes=disk_bytes(archive_root(config)/'scene_archive'),
                  fixed_splits_referenced=True,all_prior_pools_removed=all(r['previous_active_removed'] and r['previous_wfc_cache_removed'] for r in rotations))
     write_json(output/'storage_verification.json',storage)
     verification=read_json(output/'training_verification.json')

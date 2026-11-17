@@ -38,5 +38,6 @@
   "max_iterations": 100,
   "horizontal_corridor_m": 0.2,
   "height_smoothing_m": 0.4,
-  "height_tolerance_m": 0.1
+  "height_tolerance_m": 0.1,
+  "dc_input_cost_max": 0.5
 }

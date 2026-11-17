@@ -35,7 +35,8 @@ class GravityGPMP:
     def query_cost(self, positions):
         """三维高斯近邻加权代价，以及归一化权重的解析 XYZ 导数。"""
         positions = np.asarray(positions, dtype=np.float64)
-        distance, indices = self.cost_tree.query(positions, k=self.config.field_neighbors)
+        distance, indices = self.cost_tree.query(positions, k=min(self.config.field_neighbors,len(self.xyz)))
+        if distance.ndim==1:distance,indices=distance[:,None],indices[:,None]
         delta = self.xyz[indices].astype(np.float64) - positions[:, None, :]
         # 减去每行最大对数权重不改变归一化权重及导数。
         logits = -(distance**2) / (2 * self.config.field_sigma**2)

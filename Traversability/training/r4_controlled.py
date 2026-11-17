@@ -4,7 +4,7 @@ import torch
 from torch.nn import functional as F
 
 from Traversability.training.condition_response import balanced_difference_loss
-from Traversability.experiments.r4_controlled_data import point_metrics,TREAD_PARTS,LANDING_PARTS
+from Traversability.training.controlled_metrics import point_metrics,TREAD_PARTS,LANDING_PARTS
 
 
 def balanced_means(values,active):

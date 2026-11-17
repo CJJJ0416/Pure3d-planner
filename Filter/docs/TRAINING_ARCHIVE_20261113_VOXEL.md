@@ -1,6 +1,6 @@
 # GPU 体素统计 Filter 训练档案：2026-11-13
 
-已完成实现、六场景恢复、独立统计缓存、50 epoch训练和三版对照。配置为 `Filter/configs/train_scoring_voxel.json`，结果为 `runs/filter_scoring_voxel_20261113/`。
+已完成实现、六场景恢复、独立统计缓存、50 epoch训练和三版对照。配置为 `Filter/configs/train_scoring_voxel.json`，结果为 `runs/filter/filter_scoring_voxel_20261113/`。
 
 ## 实现与输入
 

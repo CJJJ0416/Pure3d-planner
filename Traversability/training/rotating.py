@@ -1,4 +1,5 @@
 """Resume frozen-Tiny cost heads to epoch 100 with a replaceable scene pool."""
+from Traversability.data.rotating import archive_root
 import argparse
 from collections import defaultdict
 from copy import deepcopy
@@ -70,7 +71,7 @@ def prepare_pool(config, generation, completed_epoch, validation):
         current['training_blocks'] = sum(b['split'] == 'train' for b in metadata['blocks'])
         current['encoding'] = encoding
         write_json(stage, current)
-        write_json(output / 'generations' / f'{generation:02d}.json', current)
+        write_json(archive_root(config) / 'generations' / f'{generation:02d}.json', current)
     return current
 
 
@@ -251,7 +252,7 @@ def train(config, resume=False, stop_after_epoch=None):
         best_encoder_equal_source=all(torch.equal(v,source_last['encoder'][k]) for k,v in selected['encoder'].items()),
         optimizer_steps=sorted({int(v['step']) for v in last['optimizer']['state'].values()}),
         expected_step=source_last['step']+sum(r['updates'] for r in history if r['epoch']>config['start_epoch']),
-        final_learning_rate=last['optimizer']['param_groups'][0]['lr'], scenes_archived=len(list((output/'scene_archive').glob('scene_*'))),
+        final_learning_rate=last['optimizer']['param_groups'][0]['lr'], scenes_archived=len(list((archive_root(config)/'scene_archive').glob('scene_*'))),
         rotations_verified=len(list((output/'rotations').glob('*.json'))), source_last_sha256=hashlib.sha256((source/'last.pt').read_bytes()).hexdigest())
     assert verification['full_100_epochs'] and verification['encoder_weights_and_buffers_equal_source']
     assert verification['optimizer_steps']==[verification['expected_step']]

@@ -2,7 +2,7 @@
 
 ## 版本与产物
 
-版本 `filter_scoring_mesh_full_20261112`。目标是对单张融合 XYZ 点云中的残影生成连续保留系数。扫描缺失由后续 Reconstruction 处理。本轮训练和测试已经完成，用户已查看真实 ROT stair 的评分与 0.2 筛选结果。
+版本 `filter_scoring_mesh_full_20261112`。目标是对单张融合 XYZ 点云中的残影生成连续保留系数。扫描缺失保持未知。本轮训练和测试已经完成，用户已查看真实 ROT stair 的评分与 0.2 筛选结果。
 
 | 项目 | 路径或数值 |
 |---|---|
@@ -10,7 +10,7 @@
 | 训练配置 | `Filter/configs/train_scoring_mesh_full.json` |
 | 数据 | `datasets/filter_scoring_mesh_full_20261112` |
 | 冻结特征 | `datasets/cache/filter_scoring_mesh_full_20261112` |
-| 运行 | `runs/filter_scoring_mesh_full_20261112` |
+| 运行 | `runs/filter/filter_scoring_mesh_full_20261112` |
 | best.pt | epoch 24，step 672，38,609,094 bytes |
 | last.pt | epoch 50，step 1400，38,676,230 bytes |
 | best SHA256 | `e258833d2e4149ce8503bb1ecbf8ace89c49b970be6cfc8430957f2e99163b90` |
@@ -67,7 +67,7 @@ best 按固定验证来源均衡 Macro MAE 选择，次级比较全点 MAE。最
 
 用户指定 keep_score≥0.2 后，保留 5,328,865 点，删除 557,403 点，删除比例 9.46955%。0.2 是操作阈值，不是经过验证集选出的最优阈值。外围散点显著减少，主体通道仍保留，仍存在误删结构边缘与保留漂浮片段。
 
-随后使用 `runs/traversability/best.pt`，条件 [clearance_min,slope_max,step_max,stand_ratio]=[0.5,0.4,0.3,0.1]，对保留点全部预测 cost。对应结果为 `predictions/rot_stair_traversability_tau020/`，同点索引和前后同权重对照已核对。
+随后使用 `weights/cost/querypool_reference/best.pt`，条件 [clearance_min,slope_max,step_max,stand_ratio]=[0.5,0.4,0.3,0.1]，对保留点全部预测 cost。对应结果为 `predictions/rot_stair_traversability_tau020/`，同点索引和前后同权重对照已核对。
 
 middle→lower 的支撑查询为 (0,4,3.97424578666687) 到 (0,4,-0.10288545489311218)，map 米制坐标：
 
@@ -78,7 +78,7 @@ middle→lower 的支撑查询为 (0,4,3.97424578666687) 到 (0,4,-0.10288545489
 | 未过滤原始点云 VST15 | A* 无路 |
 | 未过滤原始点云 VST25 | A* 31.594 m，原生 GPMP 返回 27.661 m 轨迹 |
 
-规划对照位于 `runs/planner/rot_stair_filtered020_middle_lower_20261112/`。两条成功路线输入、代价来源和规划器不同，不能作为只比较 DC/VST 的控制实验，也不能据此归因过滤后 VST 无路的具体原因。两种 GPMP 的路线参考高度均为 +0.5 m。原生 VST 未暴露收敛标志，DC 的速度惩罚是软约束，本次未做执行轨迹验收。
+规划对照位于 `outputs/planner/rot_stair_filtered020_middle_lower_20261112/`。两条成功路线输入、代价来源和规划器不同，不能作为只比较 DC/VST 的控制实验，也不能据此归因过滤后 VST 无路的具体原因。两种 GPMP 的路线参考高度均为 +0.5 m。原生 VST 未暴露收敛标志，DC 的速度惩罚是软约束，本次未做执行轨迹验收。
 
 ## 时间口径与后续使用
 

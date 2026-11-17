@@ -76,8 +76,8 @@ def prepare_inference(config, pcd, output):
 
 def prepare(config):
     # This environment supplies CuPy, SciPy and the native teacher, without torch.
-    from Traversability.experiments.decoupling_data import condition_banks
-    from Traversability.experiments.stair_data import legacy_stair_mask
+    from Traversability.data.condition_banks import condition_banks
+    from Traversability.data.stair_regions import legacy_stair_mask
     from vst_global_planner.tomogram_cloud import tomogram_points
 
     root = workspace_path(config['data'])

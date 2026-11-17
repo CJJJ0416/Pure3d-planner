@@ -1,10 +1,10 @@
 {
   "architecture": "sliced_tiny_cost_v1",
   "seed": 20261112,
-  "source_run": "runs/traversability/cost_sliced_tiny_local50_20261113",
+  "source_run": "runs/cost/cost_sliced_tiny_local50_20261113",
   "fixed_data": "datasets/cost_sliced_tiny_local50_20261113",
   "data": "datasets/cost_sliced_tiny_rotating100_20261113",
-  "output": "runs/traversability/cost_sliced_tiny_rotating100_20261113",
+  "output": "runs/cost/cost_sliced_tiny_rotating100_20261113",
   "generator_config": "common/geneator/wfc_capability_dr.json",
   "generator_python": "/home/cjh/miniconda3/envs/pure3d-ptv3/bin/python",
   "geometry_python": "/home/cjh/glocal2-nav/.venv/bin/python",

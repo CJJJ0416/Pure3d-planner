@@ -196,7 +196,9 @@ endif()
 if (UNITTESTS)
 
     # Add test_headers and codegen_test_headers
-    add_subdirectory(tests)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/CMakeLists.txt")
+      add_subdirectory(tests)
+    endif()
 
     # Direct qdldl solver testing
     add_executable(qdldl_tester

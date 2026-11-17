@@ -1,4 +1,4 @@
-"""训练代价模型；checkpoint、指标与日志统一保存在一个 runs 目录。"""
+"""训练代价模型，权重写入weights，训练记录和权重链接写入runs。"""
 import argparse
 import math
 import random
@@ -13,8 +13,9 @@ from torch.utils.data import DataLoader
 from Traversability.data.dataset import EpochSampler, PointBlocks, collate_blocks, to_device
 from Traversability.models.model import ConditionedCost
 from Traversability.training.condition_response import balanced_difference_loss, response_totals, response_report, selection_score
-from Traversability.experiments.stair_metrics import StairMetrics, checkpoint_key
+from Traversability.training.stair_metrics import StairMetrics, checkpoint_key
 from utils.pointcloud import ROOT, read_json, workspace_path, write_json
+from utils.checkpoints import checkpoint_destination
 
 
 def autocast(device, precision):
@@ -150,6 +151,7 @@ def evaluate(model, loader, device, precision, cost_scale, prediction_output=Non
 
 def save_checkpoint(path, payload):
     """先写临时文件再原子替换，避免中断时留下损坏的 checkpoint。"""
+    path = checkpoint_destination(path, 'cost')
     temporary = path.with_suffix(".pt.tmp")
     torch.save(payload, temporary)
     temporary.replace(path)
