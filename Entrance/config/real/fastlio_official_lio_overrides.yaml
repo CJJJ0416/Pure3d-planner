@@ -1,0 +1,16 @@
+# FAST-LIO2 official Avia parameters; raw source is saved in datasets/FAST_LIO2/source/avia.yaml.
+# The blind radius follows the user's requested 0.2 m setting.
+# 覆盖项：官方 Avia 配置的关键字段，其余沿用 real/faster_lio.yaml。
+preprocess:
+  lidar_type: 1       # Livox CustomMsg（Avia 分支）
+  scan_line: 6        # Avia 6 线
+  blind: 0.2          # 传感器原点盲区半径（米）
+mapping:
+  acc_cov: 0.1        # 加速度过程噪声
+  gyr_cov: 0.1        # 角速度过程噪声
+  b_acc_cov: 0.0001   # 加速度计零偏噪声
+  b_gyr_cov: 0.0001   # 陀螺零偏噪声
+  det_range: 450.0    # 官方 Avia 配置的探测距离（米）
+  extrinsic_est_en: false
+publish:
+  tf_imu_frame: avia_imu_estimate  # 原始 IMU TF 的私有帧名

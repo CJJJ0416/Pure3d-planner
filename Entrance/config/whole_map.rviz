@@ -1,0 +1,120 @@
+# RViz 布局：整图分块/代价工具显示（whole_map.launch.py rviz:=true）。
+# 注意：在 RViz 中保存布局会重写本文件，注释可能被丢弃。
+Panels:
+- Class: rviz_common/Displays
+  Name: Displays
+- Class: rviz_common/Views
+  Name: Views
+- Class: rviz_common/Tool Properties
+  Name: Tool Properties
+Visualization Manager:
+  Class: ''
+  Global Options:
+    Fixed Frame: map
+    Background Color: 24; 29; 38
+    Frame Rate: 30
+  Displays:
+  - Class: rviz_default_plugins/Grid
+    Name: Map grid
+    Enabled: true
+    Value: true
+    Cell Size: 1.0
+    Plane Cell Count: 30
+    Color: 80; 90; 100
+  - Class: rviz_default_plugins/PointCloud2
+    Name: Accumulated geometry
+    Enabled: false
+    Value: false
+    Topic:
+      Depth: 1
+      Durability Policy: Transient Local
+      History Policy: Keep Last
+      Reliability Policy: Reliable
+      Value: /entry/rviz/cloud
+    Position Transformer: XYZ
+    Color Transformer: FlatColor
+    Color: 150; 170; 190
+    Channel Name: intensity
+    Autocompute Intensity Bounds: false
+    Min Intensity: 0.0
+    Max Intensity: 1.0
+    Use rainbow: false
+    Min Color: 20; 200; 60
+    Max Color: 240; 45; 35
+    Style: Points
+    Size (Pixels): 1
+    Size (m): 0.04
+    Alpha: 0.5
+    Decay Time: 0.0
+    Use Fixed Frame: true
+  - Class: rviz_default_plugins/PointCloud2
+    Name: Traversability cost
+    Enabled: true
+    Value: true
+    Topic:
+      Depth: 1
+      Durability Policy: Transient Local
+      History Policy: Keep Last
+      Reliability Policy: Reliable
+      Value: /entry/rviz/cost_cloud
+    Position Transformer: XYZ
+    Color Transformer: Intensity
+    Color: 150; 170; 190
+    Channel Name: trav_cost
+    Autocompute Intensity Bounds: false
+    Min Intensity: 0.0
+    Max Intensity: 1.0
+    Use rainbow: false
+    Min Color: 20; 200; 60
+    Max Color: 240; 45; 35
+    Style: Points
+    Size (Pixels): 2
+    Size (m): 0.04
+    Alpha: 1.0
+    Decay Time: 0.0
+    Use Fixed Frame: true
+  - Class: rviz_default_plugins/MarkerArray
+    Name: EDEN style blocks
+    Enabled: true
+    Value: true
+    Topic:
+      Depth: 1
+      Durability Policy: Transient Local
+      History Policy: Keep Last
+      Reliability Policy: Reliable
+      Value: /entry/blocks
+    Namespaces: {}
+  - Class: rviz_default_plugins/InteractiveMarkers
+    Name: Existing manual goal
+    Enabled: true
+    Value: true
+    Interactive Markers Namespace: /basic_controls
+  - Class: rviz_default_plugins/TF
+    Name: TF axes
+    Enabled: false
+    Value: false
+    Show Names: true
+    Show Axes: true
+    Show Arrows: true
+  Tools:
+  - Class: rviz_default_plugins/Interact
+  - Class: rviz_default_plugins/MoveCamera
+  - Class: rviz_default_plugins/Select
+  - Class: rviz_default_plugins/SetGoal
+    Topic: /scan/goal
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Name: Current View
+      Distance: 18.0
+      Pitch: 0.7
+      Yaw: 0.8
+      Target Frame: map
+      Focal Point:
+        X: 0.0
+        Y: 0.0
+        Z: 0.0
+    Saved: []
+Window Geometry:
+  Width: 1440
+  Height: 900

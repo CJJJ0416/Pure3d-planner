@@ -1,0 +1,9 @@
+# 从 terrain-generator 原始场景重新导出；源目录需包含 terrain.obj 和 scene.json。
+description: 重新导出 terrain 场景
+kind: terrain      # 场景类型：由 OBJ/STL 导出 Gazebo world
+prepare: true      # true：每次启动前调用 prepare_world.py 重新导出
+# 相对路径均以 Pure3D_ws 为基准。源数据迁移后在此修改。
+source: datasets/simulation/isaac_lio_20261117/scene
+output: datasets/simulation/gazebo_terrain
+# 自动选择该楼层的受支撑楼梯入口；出生点保存在导出的 spawn.json。
+floor: 0

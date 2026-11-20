@@ -1,0 +1,53 @@
+# 导航框架运行配置；在对应 launch 中也可找到此文件路径。
+# Usage：ros2 launch Entrance/launch/real/real_bag.launch.py action:=run
+# Real-world local perception. Bag replay overrides use_sim_time to follow /clock.
+# 输入范围：真机同样只取机身周围的局部体素盒。
+input_scope: local_voxel_box
+cloud_topic: /faster_lio/cloud_registered  # Faster-LIO 配准点云
+odom_topic: /faster_lio/Odometry           # Faster-LIO 里程计
+body_frame: body
+box_size_m: [6.0, 6.0, 5.0]                # 局部盒子：长、宽、高（米）
+box_shift_m: 0.2                           # 盒子相对机身的平移（米）
+max_pose_age_s: 0.5                        # 位姿过期阈值（秒）
+cache_publish_hz: 2.0                      # 缓存点云发布频率（Hz）
+frame: world                               # 代价输出坐标系
+source_frame: camera_init                  # LIO 原始点云坐标系
+use_sim_time: false                        # 真机默认系统时间；bag 回放时由流程改为跟随 /clock
+voxel_m: 0.05                              # 体素边长（米）
+max_voxels: 500000                         # 单次最多保留的体素数
+context_mode: stable_core                  # 稳定核心区 + 外扩上下文
+period_s: 0.25                             # 推理周期（秒）
+max_input_age_s: 1.0                       # 输入点云最大允许延迟（秒）
+max_result_age_s: 2.0                      # 结果最大允许延迟（秒）
+core_size_m: [4.0, 4.0, 3.0]               # 核心区尺寸（米）
+context_m: 1.0                             # 外扩上下文厚度（米）
+condition: [0.5, 0.4, 0.2, 0.0]            # 四档代价条件输入
+# 显示用的降采样体素、点数上限与刷新频率。
+display_voxel_m: 0.1
+display_max_points: 30000
+display_hz: 1.0
+# KNN 离群点过滤：真机点云噪声更大，使用 conservative 方式保留边界。
+knn_filter:
+  enabled: true
+  method: conservative
+  k: 16                        # 邻居数
+  alpha: 2.0                   # 距离阈值系数
+  radius_m: 0.15               # 搜索半径（米）
+  min_other_neighbors: 3       # 判定为内点所需的最少异类邻居
+  workers: 4                   # 并行线程数
+  removed_display_max_points: 2000
+# 推理进程与设备。
+network_python: /home/cjh/miniconda3/envs/pure3d-ptv3/bin/python
+device: cuda:0
+output_root: outputs/real_world/entry_local
+# 真机默认模型与可选模型注册表。
+model: tiny
+models:
+  tiny:
+    checkpoint: weights/cost/cost_full3d_tiny_unfrozen50_20261113/best.pt
+    expected_epoch: 49                # 权重自检：与训练记录一致
+    expected_encoder: utonia_tiny     # 权重自检：编码器类型
+  small:
+    checkpoint: weights/cost/cost_full3d_small_unfrozen_e200_20261114-005204/best.pt
+    expected_epoch: 56
+    expected_encoder: utonia_small

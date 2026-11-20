@@ -1,0 +1,9 @@
+# 整体启动的默认场景；临时切换使用 scene:=名称 或总方案的 --scene 名称。
+default_scene: building
+# 仿真公共默认值；每个场景可在自己的 YAML 中覆盖，命令行优先级最高。
+launch_arguments:
+  gui: 'true'        # 是否启动 Gazebo 图形客户端（false 时仅运行服务器）
+  rviz: 'true'       # 是否启动所选规划器的 RViz 布局
+  planner: scan      # 局部规划器：scan、ego 或 None（仅仿真，不发布速度）
+  flight_type: '1'   # SCAN 模式：1 人工目标、2 预设航点、3 参考路径、4 cost 引导
+  device: cpu        # RL 策略推理设备：cpu 或 cuda

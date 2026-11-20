@@ -1,0 +1,16 @@
+# 原 sru_singleascent_111824315.launch.py 的场景与出生点集中到本文件。
+description: SRU SingleAscent 两层建筑 seed 111824315
+kind: world        # 场景类型：world 与模型目录分别指定
+# @assets 指向 unitree_gazebo 的模型和 world 资源目录。
+world: '@assets/worlds/sru_singleascent_111824315.world'
+models: '@assets/models'
+required_model_files:              # 启动前确认建筑模型与网格存在
+  - SRU-SingleAscent-111824315/model.sdf
+  - SRU-SingleAscent-111824315/meshes/building.dae
+spawn:                             # 出生位姿：米、弧度
+  x: -1.0215162940345284
+  y: -7.237344959137292
+  height: 0.5
+  yaw: -1.4871114903730263
+# 保留原独立场景入口默认行为；整套方案会显式选择 SCAN。
+launch_arguments: {gui: 'true', rviz: 'false', planner: None, device: cuda}

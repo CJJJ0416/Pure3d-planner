@@ -1,65 +1,69 @@
 # Pure3D 文件架构
 
-更新日期：2026-11-16。根目录：`/home/cjh/Pure3D_ws`。
+更新日期：2026-11-20。根目录：`/home/cjh/Pure3D_ws`。
 
 ```text
 Pure3D_ws/
-├── Traversability/
-│   ├── configs/          # 数据批次、教师条件与训练设置
-│   ├── data/             # 生成、教师、Tomogram、分块和数据加载
-│   ├── models/           # PTv3 + QueryPool + FiLM + CostHead
-│   ├── training/         # 训练、损失、评估和前向入口
-│   ├── inference/        # 新建筑几何准备和完整原始点推理
-│   ├── visualization/    # GT/预测图与 RViz
-│   ├── experiments/      # 楼梯数据、连通指标和实验调度
-│   ├── docs/             # 完整训练流程与历史设计
-│   └── README.md
-├── Filter/
-│   ├── configs/          # 活动方案、数据和训练配置，历史配置另行保留
-│   ├── data/             # Mesh 采样、增强、连续标签和固定特征缓存
-│   ├── models/           # 投影、几何分支与连续保留评分头
-│   ├── training/         # 损失、训练、评估和恢复
-│   ├── inference/        # 全点保留系数与显式阈值后处理
-│   ├── visualization/    # GT/预测图与 RViz
-│   ├── docs/             # 架构、数据契约、操作流程与训练档案
-│   └── README.md
-├── common/
-│   ├── pointcloud_io/    # PCD 与 ROS PointCloud2 I/O
-│   ├── Mid360_imu_sim/   # MID-360 模型与方向表
-│   ├── scanning/        # 增量扫描、IMU、LIO、GT 和原生可视化
-│   ├── vst_global_planner/
-│   └── geneator/         # 原生 terrain-generator、WFC 与 Mesh/PCD 工具
-├── Entry/                # 在线 LIO 盒子、KNN、局部 cost、A* 与 SCAN 交接
-├── planner/              # PCD → DC跨阶图 → A* → 反重力GPMP
-├── datasets/             # 几何、标签、数据划分、固定回归案例与缓存
-├── utils/                # PTv3 与共用几何工具
-├── weights/              # 各模块实际checkpoint和公共预训练权重
-├── runs/                 # filter/cost训练记录和权重链接
-├── outputs/              # 独立推理、ROS与导航输出
-├── .cache/               # 编译产物和Gazebo工作目录
-├── docs/                 # 工程整体架构与跨模块契约
-└── ptv3_tomography/       # 旧工程参考
+├── Entrance/                # 导航框架统一启动入口
+│   ├── launch/              # sim/real 单项方案，含中文注释、Usage 和配置路径
+│   ├── config/              # 场景、LIO、cost、SCAN、导航与 RViz 配置
+│   └── shell/               # 整体启动、构建与内部环境库
+├── utils/                   # 核心组件与共用工具
+│   ├── Filter/              # 点云保留评分与过滤
+│   ├── Traversability/      # 条件化可通行代价的数据、训练与推理
+│   └── PointTransformerV3/  # 固定版本编码器源码
+├── common/                  # 原 Entry 拆分后的共用组件
+│   ├── cost/                # 局部/整图 cost、worker 与监测
+│   ├── mapping/             # 地图、稳定上下文与体素盒
+│   ├── planning/            # 目标接入、参考与跟踪
+│   ├── visualization/       # ROS/RViz 与离线显示
+│   ├── bag_tools/           # 采集、回放与离线数据处理
+│   ├── native/              # C++ 数组、体素与过滤
+│   └── pointcloud_io/       # PCD/PointCloud2 I/O
+├── planner/
+│   ├── light_planner/       # 原 planner，表面图/A*/优化与候选选择
+│   └── learning_planner/
+│       └── neupan/          # 本分支学习规划方法，内部按 data/models/training/inference 等分类
+├── Simulator/               # 仿真、机器人与场景/扫描生成
+│   ├── SCAN-Planner/
+│   ├── quadruped_ros2_control/
+│   ├── Mid360_imu_sim/
+│   ├── livox_ros_driver2/
+│   ├── unitree_gazebo/
+│   ├── scanning/
+│   └── geneator/
+├── third_party_lib/         # 独立参考工程与外部基线
+│   ├── ptv3_tomography/
+│   └── vst_global_planner/
+├── datasets/                # 数据与教师标签
+├── weights/                 # 实际 checkpoint
+├── runs/                    # 训练记录与权重链接
+├── outputs/                 # 独立推理、ROS 与导航输出
+├── .cache/                  # 编译与仿真工作目录
+└── docs/                    # 跨组件说明
 ```
 
 ## 代码入口
+
+导航运行入口见 [Entrance](../Entrance/README.md)。各业务模块保留实现代码，导航运行 YAML 统一放在 `Entrance/config/`。
 
 以工程根目录为工作目录，使用分类后的完整模块名。
 
 | 工作 | 入口 |
 |---|---|
-| 批量生成 | `python -m Traversability.data.generate` |
-| 原生教师 | `python -m Traversability.data.teacher` |
-| 分块/近邻 | `python -m Traversability.data.blocks` |
-| 训练 | `python -m Traversability.training.train` |
-| 评估 | `python -m Traversability.training.evaluate` |
-| 完整点云推理 | `python -m Traversability.inference.predict` |
-| 绘制 GT 对比 | `python -m Traversability.visualization.visualize` |
-| RViz | `python -m Traversability.visualization.rviz` |
-| 多模型 RViz | `python -m Traversability.visualization.compare_rviz` |
+| 批量生成 | `python -m utils.Traversability.data.generate` |
+| 原生教师 | `python -m utils.Traversability.data.teacher` |
+| 分块/近邻 | `python -m utils.Traversability.data.blocks` |
+| 训练 | `python -m utils.Traversability.training.train` |
+| 评估 | `python -m utils.Traversability.training.evaluate` |
+| 完整点云推理 | `python -m utils.Traversability.inference.predict` |
+| 绘制 GT 对比 | `python -m utils.Traversability.visualization.visualize` |
+| RViz | `python -m utils.Traversability.visualization.rviz` |
+| 多模型 RViz | `python -m utils.Traversability.visualization.compare_rviz` |
 
-完整命令与环境见 [Traversability 训练流程](../Traversability/docs/TRAINING_WORKFLOW.md)。
+完整命令与环境见 [Traversability 训练流程](../utils/Traversability/docs/TRAINING_WORKFLOW.md)。
 
-Filter 已完成全点评分数据、特征缓存、训练、测试与独立推理。活动入口为 `Filter.data.scoring`、`Filter.data.features`、`Filter.training.train`、`Filter.training.evaluate`、`Filter.inference.predict` 和显式后处理 `Filter.inference.threshold`。命令见 [操作流程](../Filter/docs/TRAINING_WORKFLOW.md)，实测见 [训练档案](../Filter/docs/TRAINING_ARCHIVE_20261112.md)。
+Filter 已完成全点评分数据、特征缓存、训练、测试与独立推理。活动入口为 `utils.Filter.data.scoring`、`utils.Filter.data.features`、`utils.Filter.training.train`、`utils.Filter.training.evaluate`、`utils.Filter.inference.predict` 和显式后处理 `utils.Filter.inference.threshold`。命令见 [操作流程](../utils/Filter/docs/TRAINING_WORKFLOW.md)，实测见 [训练档案](../utils/Filter/docs/TRAINING_ARCHIVE_20261112.md)。
 
 
 ## 数据与结果

@@ -1,0 +1,17 @@
+{
+  "checkpoint": "weights/cost/cost_full3d_tiny_unfrozen50_20261113/best.pt",
+  "condition": {
+    "clearance_min": 0.5,
+    "slope_max": 0.4,
+    "step_max": 0.2,
+    "stand_ratio": 0.0
+  },
+  "device": "cuda:0",
+  "cpu_threads": 4,
+  "geometry_python": "/home/cjh/glocal2-nav/.venv/bin/python",
+  "geometry_voxel_size_m": 0.05,
+  "window": {
+    "core_size_m": [4.0, 4.0, 3.0],
+    "context_m": 1.0
+  }
+}

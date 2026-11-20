@@ -1,0 +1,54 @@
+# 导航框架运行配置；在对应 launch 中也可找到此文件路径。
+# Usage：ros2 launch Entrance/launch/sim/faster_lio.launch.py
+/**:
+  ros__parameters:
+    use_sim_time: true
+    # 输入话题与时间同步：仿真由 Gazebo 提供 /clock，无需额外时间同步。
+    common:
+      lid_topic: /livox/lidar2
+      imu_topic: /livox/imu
+      time_sync_en: false
+    # 预处理：MID360 在本移植中走 Livox CustomMsg 的 AVIA 分支（lidar_type=1）。
+    preprocess:
+      # This port calls the Livox CustomMsg branch AVIA. MID360 uses it too;
+      # types 2/3 are PointCloud2 branches for Velodyne/Ouster.
+      lidar_type: 1
+      scan_line: 1            # 仿真点云按单线处理
+      blind: 0.3              # 传感器原点盲区半径（米）
+      time_scale: 0.001       # Livox 时间戳单位换算（ms -> s）
+    # 估计器：过程噪声、量测噪声、最大探测距离与外参估计开关。
+    mapping:
+      acc_cov: 0.01
+      gyr_cov: 0.01
+      b_acc_cov: 0.0001
+      b_gyr_cov: 0.0001
+      det_range: 40.0         # 有效探测距离（米）
+      extrinsic_est_en: false # 固定外参，不在线估计
+      # p_IMU = R * p_LIDAR + T, inverse of laser_livox -> livox_imu_link.
+      extrinsic_T: [0.011, 0.02329, -0.04412]      # IMU <- LiDAR 平移（米）
+      extrinsic_R: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]  # IMU <- LiDAR 旋转
+    # 发布：路径由 frame 桥接统一发布；原始 TF 使用私有帧名，避免与公共 TF 冲突。
+    publish:
+      path_publish_en: false  # Body path is published by the frame bridge.
+      scan_publish_en: true
+      scan_effect_pub_en: false
+      dense_publish_en: true
+      scan_bodyframe_pub_en: false
+      tf_world_frame: camera_init
+      tf_imu_frame: mid360_imu_estimate  # Private raw TF; converted to public body.
+    # 特征与地图：关闭特征提取，按点间隔抽样，控制迭代次数与地图体素大小。
+    feature_extract_enable: false
+    point_filter_num: 2
+    max_iteration: 4
+    filter_size_surf: 0.25
+    filter_size_map: 0.25
+    cube_side_length: 100.0   # 地图立方体边长（米）
+    ivox_grid_resolution: 0.5
+    ivox_nearby_type: 26
+    esti_plane_threshold: 0.1
+    # 调试图保存：默认关闭，避免每次运行产生大文件。
+    path_save_en: false
+    runtime_pos_log_enable: false
+    pcd_save:
+      pcd_save_en: false
+      interval: -1

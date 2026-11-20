@@ -1,20 +1,33 @@
-# Common
+# Pure3D 共用组件
 
-集中管理通用点云 I/O、VST 与场景生成工具。
+原 Entry 按职责拆入本目录。启动入口与运行配置统一由 [Entrance](../Entrance/README.md) 管理。
 
-| 目录 | 用途 |
+| 目录/文件 | 职责 |
 |---|---|
-| `pointcloud_io/` | PCD 读写、XYZ 提取及 ROS PointCloud2 转换 |
-| `vst_global_planner/` | VST 内核、原生规划器和已有组合场景工具 |
-| `geneator/` | 官方 terrain-generator 与 WFC 粗糙多层场景生成入口 |
-| `Mid360_imu_sim/` | MID-360 方向表、模型与已有 Gazebo ROS 2 插件 |
-| `scanning/` | 逐点 Warp 扫描、带噪 IMU、Faster-LIO、Mesh 监督、分块及 Isaac/RViz 查看 |
-| `livox_ros_driver2/` | 仿真所需的原生 CustomMsg/CustomPoint 接口，无硬件驱动 |
-| `quadruped_ros2_control/` | A1 描述、ros2_control 控制器、RL 策略和键盘输入 |
-| `unitree_gazebo/` | `sim/` 仿真、`real/` 真机配置与入口，`scripts/` 共用 LIO/TF 外参转换 |
-| `SCAN-Planner/` | 现有 ROS 2 SCAN 局部规划、地图、轨迹和跟踪器 |
+| `cost/` | 局部/整图 cost 接收、推理、GPU worker、会话与耗时监测 |
+| `mapping/` | 点云地图、LIO 盒子、稳定上下文与体素过滤 |
+| `planning/` | 人工目标接入、表面查询、局部参考与轨迹跟踪 |
+| `visualization/` | RViz 显示、点云/Marker 发布与离线绘图 |
+| `bag_tools/` | bag 采集、回放、分段、监督和离线处理 |
+| `native/` | 共用 C++ 数组、体素与过滤实现及数组绑定 |
+| `pointcloud_io/` | PCD 与 ROS PointCloud2 读写 |
+| `io.py`、`paths.py` | JSON/NumPy、ROS 消息转换与统一目录定位 |
+| `experiments/` | 本地对照实验，按既有规则不随源码提交 |
 
-预训练 PTv3、坐标处理、分块和编码器封装放在 `../utils/`。
+实际运行入口示例：`common.cost.local`、`common.cost.session`、`common.cost.worker`、`common.planning.navigation` 和 `common.bag_tools.real_bag`。GPU worker 由调用模块管理。
+
+Usage（工作区根目录）：
+
+```bash
+source /opt/ros/humble/setup.bash
+ros2 launch Entrance/launch/sim/cost.launch.py model:=tiny rviz:=true
+ros2 launch Entrance/launch/sim/navigation.launch.py --show-args
+./Entrance/shell/total_terminal.sh --scene terrain-prepared --dry-run
+```
+
+[局部 cost](cost/docs/LOCAL_COST.md)、[规划与跟踪](planning/docs/PURE_PATH_FOLLOW.md)、[整图工具](cost/docs/WHOLE_MAP.md)、[bag 工具](bag_tools/docs/BAG_WORKFLOW.md)。
+
+仿真与场景资源位于 [Simulator](../Simulator/README.md)，两套规划器位于 [planner](../planner/README.md)，Filter 和 Traversability 核心组件位于 [utils](../utils/README.md)。
 
 所有任务共用 `common.pointcloud_io`，不在模型或可视化代码里另写 PCD 解析器：
 
@@ -28,8 +41,4 @@ write_pcd("prediction.pcd", xyz, cost)
 ```
 
 读写保持源坐标系、点数与行序，不做降采样、分块或代价归一化。支持 binary 和 ASCII PCD 读取，写出 binary float32 PCD。ROS 转换使用 `pointcloud2_xyz` 和 `pcd_to_pointcloud2`，仅调用时导入 ROS。后者沿用现有二进制 float32 PCD 到消息的直接转换，供 RViz 发布使用。
-
-场景脚本从工程根目录通过 `common/geneator/...` 调用，VST 自带入口通过 `common/vst_global_planner/scripts/...` 调用。具体运行参数在后续数据契约和运行说明中确定。
-
-WFC 多层场景入口为 geneator/generate_wfc_multifloor.py，调用方式与分层装配说明见 [WFC 场景说明](geneator/README.md)。
 

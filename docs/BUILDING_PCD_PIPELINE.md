@@ -38,4 +38,4 @@ Filter 的 `keep_score` 描述观测应保留的程度，墙体和不可通行�
 
 ## 使用入口
 
-[Entry](../Entry/README.md)、[在线启动与耗时](../Entry/docs/LOCAL_COST.md)、[静态 planner](../planner/README.md)、[Cost 训练流程](../Traversability/docs/TRAINING_WORKFLOW.md)、[Filter 流程](../Filter/docs/TRAINING_WORKFLOW.md)、[文件布局](WORKSPACE_LAYOUT.md)。
+[Entry](../common/README.md)、[在线启动与耗时](../common/cost/docs/LOCAL_COST.md)、[静态 planner](../planner/light_planner/README.md)、[Cost 训练流程](../utils/Traversability/docs/TRAINING_WORKFLOW.md)、[Filter 流程](../utils/Filter/docs/TRAINING_WORKFLOW.md)、[文件布局](WORKSPACE_LAYOUT.md)。

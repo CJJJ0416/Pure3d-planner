@@ -1,0 +1,9 @@
+# 导航框架运行配置；在对应 launch 中也可找到此文件路径。
+# Usage：ros2 launch Entrance/launch/sim/gazebo.launch.py scene:=building
+# Local planner wiring is configured here, not exposed as Gazebo launch arguments.
+# 所有规划器共用的话题名；Gazebo/SCAN/EGO 节点通过 remapping 对齐到这里。
+topics:
+  odom: /Odometry_gazebo  # 机身里程计（仿真真值经 frame 桥接后的公共话题）
+  cloud: /livox/lidar     # MID360 原始点云
+  path: /pct_path         # 参考路径（模式 4 时改为 /pure_path）
+  cmd_vel: /cmd_vel       # 唯一的速度控制输入

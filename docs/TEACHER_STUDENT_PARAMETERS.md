@@ -21,11 +21,11 @@ stand_ratio是邻域内满足可站立条件的网格比例要求。原生台阶
 
 教师条件顺序为 `[clearance_min, slope_max, step_max, interval_free, stand_ratio]`，末尾追加stand_ratio以保留前四列含义。教师尺度为 `[1.0,0.5,0.3,1.0,1.0]`。PointBlocks按名称选择第0、1、2、4列，并仅训练interval_free=0.5的条件。
 
-完整原生教师配置仍为 `common/vst_global_planner/configs/teacher_building.json`。map.resolution=0.1、ground_h=0、slice_dh=0.5、kernel_size=7、interval_min=0.5、cost_barrier=50、inflation=0.1、adjust_cost_p=2等原生规则保留，standable_ratio改为条件覆盖项。地图、几何与机器人条件分别记录在pickle中。
+完整原生教师配置仍为 `third_party_lib/vst_global_planner/configs/teacher_building.json`。map.resolution=0.1、ground_h=0、slice_dh=0.5、kernel_size=7、interval_min=0.5、cost_barrier=50、inflation=0.1、adjust_cost_p=2等原生规则保留，standable_ratio改为条件覆盖项。地图、几何与机器人条件分别记录在pickle中。
 
 ## 每场景监督条件
 
-`Traversability/configs/robots.json` 定义14组固定学生条件，覆盖基准、四项参数各三档变化，以及 `[0.9,0.6,0.3,0.1]` 联合条件。每个场景按自身seed追加10组四参数联合分层随机采样，合计24组学生条件。
+`utils/Traversability/data/configs/robots.json` 定义14组固定学生条件，覆盖基准、四项参数各三档变化，以及 `[0.9,0.6,0.3,0.1]` 联合条件。每个场景按自身seed追加10组四参数联合分层随机采样，合计24组学生条件。
 
 另外保留tall_robot（interval_free=1.1m）教师诊断，不进入当前学生训练。每场景共25组教师pickle与Tomogram PCD。
 

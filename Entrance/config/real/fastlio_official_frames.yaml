@@ -1,0 +1,24 @@
+# p_parent = R * p_child + t. Official Avia: IMU <- LiDAR.
+# No robot mounting calibration is provided for this handheld recording:
+# the public body frame is the IMU frame, rather than a synthetic Go2 base.
+# 手持录制没有机器人安装标定，因此把 body 直接定义为 IMU 帧。
+frames:
+  world: world
+  map: map
+  camera: camera_init
+  body: body
+  body_reference: avia_imu   # 对外机身参考帧 = Avia IMU
+  imu: avia_imu
+mount:
+  source: parameters
+  body_to_lidar:
+    translation: [0.04165, 0.02326, -0.0284]  # IMU -> 雷达平移（米）
+    rpy: [0.0, 0.0, 0.0]                     # IMU -> 雷达旋转（弧度）
+  lidar_to_imu:
+    translation: [-0.04165, -0.02326, 0.0284]  # 雷达 -> IMU 平移（米）
+    rpy: [0.0, 0.0, 0.0]                       # 雷达 -> IMU 旋转（弧度）
+anchor:
+  # 固定初始锚定；手持数据没有外部位姿参考。
+  source: fixed
+  translation: [0.0, 0.0, 0.0]
+  rpy: [0.0, 0.0, 0.0]

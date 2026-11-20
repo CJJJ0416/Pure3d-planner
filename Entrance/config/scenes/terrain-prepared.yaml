@@ -1,0 +1,6 @@
+# 复用已有导出，不重新生成网格。出生点读取 output 下的 spawn.json。
+description: 已导出的 terrain 场景
+kind: terrain      # 与 terrain.yaml 相同，但不触发导出
+prepare: false     # false：直接使用 output 中已有的 world/STL/spawn
+# 目录内需要 terrain.world、terrain.stl、spawn.json。
+output: datasets/simulation/gazebo_terrain

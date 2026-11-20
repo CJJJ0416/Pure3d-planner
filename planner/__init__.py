@@ -1,6 +1,1 @@
-"""PCD上的DC表面规划，正式方案默认启用跨阶边。"""
-from .config import PlannerConfig
-from .planner_wrapper import DCSurfacePlanner
-from .surface import SparseSurfacePlanner
-
-__all__=['PlannerConfig','DCSurfacePlanner','SparseSurfacePlanner']
+"""Pure3D 规划器：light_planner 与 learning_planner。"""

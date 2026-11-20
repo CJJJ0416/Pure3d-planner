@@ -1,0 +1,10 @@
+# JEPLO Go2/MID360 replay overrides for the real Faster-LIO profile.
+# The 0.01 acceleration process noise diverged after the first stair descent.
+# A controlled 35 s replay with 0.1 retained the original stamps and extrinsics.
+# 覆盖项只改写下列字段，其余仍沿用 real/faster_lio.yaml。
+mapping:
+  acc_cov: 0.1        # 加速度过程噪声：楼梯下行时 0.01 会发散，回放验证 0.1 稳定
+preprocess:
+  scan_line: 4        # MID360 驱动输出 0..3 线号
+  # Sensor-origin radial exclusion, applied before registration and Entry.
+  blind: 0.2          # 传感器原点径向盲区（米）

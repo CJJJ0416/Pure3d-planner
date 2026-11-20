@@ -1,0 +1,37 @@
+# 导航框架运行配置；在对应 launch 中也可找到此文件路径。
+# Usage：ros2 launch Entrance/launch/sim/whole_map.launch.py mode:=cost
+# 输入与坐标：Faster-LIO 点云/里程计，目标来自 SCAN；推理在世界系完成。
+cloud_topic: /faster_lio/cloud_registered
+odom_topic: /faster_lio/Odometry
+goal_topic: /scan/goal
+frame: map                         # 输出代价使用的公共地图坐标系
+source_frame: camera_init          # LIO 原始点云坐标系
+world_frame: world                 # 世界系（用于推理与显示对齐）
+use_sim_time: true
+# 整图分块：核心区 + 外扩上下文，按块预测代价。
+core_size_m: [4.0, 4.0, 3.0]
+context_m: 1.0
+condition: [0.5, 0.4, 0.4, 0.0]    # 四档代价条件输入
+# 到达与观测判定：到达容差、停留时间、初始观测时间。
+arrival_tolerance_m: 0.3
+arrival_dwell_s: 3.0
+initial_observation_s: 3.0
+# 代价计算策略：按目标触发、世界系推理、整块重算。
+cost_trigger: goal
+inference_frame: world
+inference_recompute: full
+# 显示与快照：降采样体素、点数上限与刷新频率。
+visualization_hz: 2.0
+display_voxel_m: 0.1
+display_max_points: 200000
+display_hz: 1.0
+snapshot_hz: 2.0
+# 输入队列与 QoS：限制待处理扫描帧数和队列深度，避免内存无限增长。
+pending_scan_limit: 50
+input_qos_depth: 50
+# 推理进程与模型权重（相对工作区根目录）。
+network_python: /home/cjh/miniconda3/envs/pure3d-ptv3/bin/python
+checkpoint: 'weights/cost/cost_full3d_small_unfrozen_e200_20261114-005204/best.pt'
+expected_epoch: 56
+device: cuda:0
+output_root: outputs/entry

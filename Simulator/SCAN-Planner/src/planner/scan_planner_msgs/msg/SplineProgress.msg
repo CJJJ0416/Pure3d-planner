@@ -1,0 +1,9 @@
+int64 active_id
+float64 elapsed
+float64 duration
+int64 queued_id
+int64 result_id
+bool accepted
+bool ready
+bool frozen
+string reason

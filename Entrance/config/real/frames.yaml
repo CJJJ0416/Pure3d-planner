@@ -1,0 +1,27 @@
+# 导航框架运行配置；在对应 launch 中也可找到此文件路径。
+# Usage：ros2 launch Entrance/launch/real/faster_lio_real.launch.py
+# Copy and fill with your measured calibration. Distances: m; angles: rad.
+# This example has the current simulation's mounting values, not a hardware calibration.
+# 公共 TF 帧名与仿真一致；真机没有 Gazebo world，默认只发布 map -> camera_init -> body。
+frames:
+  map: map
+  camera: camera_init
+  body: body
+  body_reference: base
+  imu: livox_imu_link
+mount:
+  # parameters：使用下面的显式外参；若机器人有 URDF，可改为 urdf 从 TF 读取。
+  source: parameters
+  body_to_lidar:
+    translation: [0.2, 0.0, 0.08]   # 机身 -> 雷达平移（米），需按实测修改
+    rpy: [0.0, 0.785, 0.0]          # 机身 -> 雷达旋转（弧度），需按实测修改
+  lidar_to_imu:
+    translation: [-0.011, -0.02329, 0.04412]  # 雷达 -> IMU 平移（米）
+    rpy: [0.0, 0.0, 0.0]                      # 雷达 -> IMU 旋转（弧度）
+anchor:
+  # Choose the initial body pose in map; no Gazebo TF is required.
+  # The camera/IMU mounting angle is included automatically, once.
+  # 真机用初始机身位姿建立 map 锚定；translation/rpy 为 map 中的初始位姿。
+  source: initial_body
+  translation: [0.0, 0.0, 0.0]
+  rpy: [0.0, 0.0, 0.0]

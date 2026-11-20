@@ -1,0 +1,77 @@
+[
+  {
+    "name": "lower_up",
+    "start": [
+      7.94876840471699,
+      -8.39910237176915,
+      -0.09032366481406034
+    ],
+    "goal": [
+      3.1029789447784424,
+      -5.646570682525635,
+      1.6560364723205567
+    ],
+    "query_source": "datasets/benchmarks/surface_planning/reference/navigation/queries/000023/query.json",
+    "query_kind": "saved_query"
+  },
+  {
+    "name": "upper_up",
+    "start": [
+      3.4170949144620963,
+      -5.689063845567742,
+      1.4690372635398021
+    ],
+    "goal": [
+      3.102978229522705,
+      -0.7422463297843933,
+      2.6763721466064454
+    ],
+    "query_source": "datasets/benchmarks/surface_planning/reference/navigation/queries/000024/query.json",
+    "query_kind": "saved_query"
+  },
+  {
+    "name": "lower_down",
+    "start": [
+      3.1029789447784424,
+      -5.646570682525635,
+      1.6560364723205567
+    ],
+    "goal": [
+      7.94876840471699,
+      -8.39910237176915,
+      -0.09032366481406034
+    ],
+    "query_source": "datasets/benchmarks/surface_planning/reference/navigation/queries/000023/query.json",
+    "query_kind": "reversed_saved_query"
+  },
+  {
+    "name": "short_down",
+    "start": [
+      5.302711486816406,
+      -6.774327278137207,
+      0.44726488590240476
+    ],
+    "goal": [
+      7.949025720169384,
+      -8.398800081638822,
+      -0.09025658493857969
+    ],
+    "query_source": "datasets/benchmarks/surface_planning/reference/navigation/queries/000022/query.json",
+    "query_kind": "reversed_saved_query"
+  },
+  {
+    "name": "same_height",
+    "start": [
+      7.94876840471699,
+      -8.39910237176915,
+      -0.09032366481406034
+    ],
+    "goal": [
+      7.94876840471699,
+      -6.59910237176915,
+      -0.09032366481406034
+    ],
+    "query_source": "datasets/benchmarks/surface_planning/reference/navigation/queries/000023/query.json",
+    "query_kind": "synthetic_same_height_goal_on_saved_pcd"
+  }
+]

@@ -33,9 +33,9 @@ VST 生成条件化 cost 教师标签，学生条件和教师参数对应关系�
 
 ## 实现位置
 
-- [Entry 接口与模块](../Entry/README.md)
-- [局部 cost 与 KNN](../Entry/docs/LOCAL_COST.md)
-- [纯 A* 跟随](../Entry/docs/PURE_PATH_FOLLOW.md)
-- [Traversability 训练与推理](../Traversability/README.md)
-- [Filter 训练与推理](../Filter/README.md)
+- [Entry 接口与模块](../common/README.md)
+- [局部 cost 与 KNN](../common/cost/docs/LOCAL_COST.md)
+- [纯 A* 跟随](../common/planning/docs/PURE_PATH_FOLLOW.md)
+- [Traversability 训练与推理](../utils/Traversability/README.md)
+- [Filter 训练与推理](../utils/Filter/README.md)
 - [真机安装与迁移](REAL_WORLD_SETUP.md)

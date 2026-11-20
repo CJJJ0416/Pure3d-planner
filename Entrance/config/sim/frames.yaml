@@ -1,0 +1,31 @@
+# 导航框架运行配置；在对应 launch 中也可找到此文件路径。
+# Usage：ros2 launch Entrance/launch/sim/faster_lio.launch.py
+# Transform convention: p_parent = R(rpy) * p_child + translation.
+# Metres and radians; rpy means fixed-axis roll/pitch/yaw (Rz * Ry * Rx).
+# 公共 TF 帧名：world 为 Gazebo 世界，map 为 LIO 地图，camera_init 为 LIO 原始世界系，
+# body 为对外发布的机身系；body_reference 与 imu 用于从 URDF 读取安装关系。
+frames:
+  world: world
+  map: map
+  camera: camera_init
+  body: body
+  body_reference: base
+  imu: livox_imu_link
+mount:
+  # urdf: read body_reference -> imu from robot_state_publisher.
+  # parameters: use body_to_lidar * lidar_to_imu below (for a real robot).
+  # 仿真直接从 URDF 读取安装外参，下面的数值仅作为文档与真机模板。
+  source: urdf
+  body_to_lidar:
+    translation: [0.2, 0.0, 0.18]   # 机身 -> 雷达平移（米）
+    rpy: [0.0, 0.785, 0.0]          # 机身 -> 雷达旋转（弧度，绕 y 倾斜 45°）
+  lidar_to_imu:
+    translation: [-0.011, -0.02329, 0.04412]  # 雷达 -> IMU 平移（米）
+    rpy: [0.0, 0.0, 0.0]                      # 雷达 -> IMU 旋转（弧度）
+anchor:
+  # Align world -> map once using world -> base and camera_init -> body.
+  # map -> camera_init is always identity when frames.world is configured.
+  # 仿真用 Gazebo 真值把 world 与 LIO 地图对齐一次。
+  source: gazebo
+  translation: [0.0, 0.0, 0.0]   # 额外锚定平移（米）
+  rpy: [0.0, 0.0, 0.0]           # 额外锚定旋转（弧度）

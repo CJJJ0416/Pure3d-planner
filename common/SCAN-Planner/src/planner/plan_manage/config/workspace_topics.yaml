@@ -1,6 +1,0 @@
-# Local planner wiring is configured here, not exposed as Gazebo launch arguments.
-topics:
-  odom: /Odometry_gazebo
-  cloud: /livox/lidar
-  path: /pct_path
-  cmd_vel: /cmd_vel

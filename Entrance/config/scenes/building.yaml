@@ -1,0 +1,12 @@
+# Building-no-rails：保留当前 EOLP 模型优先、包内副本兜底的选择方式。
+description: Building-no-rails 建筑
+kind: model                        # 场景类型：从模型目录反推 world
+model_env: PURE3D_BUILDING_MODEL   # 可选：环境变量指向自定义模型副本
+model_candidates:                  # 按顺序选择第一个含 model.sdf 的目录
+  - ~/EOLP_ws/src/sru_a1_bringup/models/Building-no-rails
+  - '@assets/models/Building-no-rails'
+# 相对于所选模型目录；模型和 world 始终使用同一套资源。
+world_from_model: ../../worlds/Building-no-rails.world
+required_model_files: [model.sdf, meshes/Building-no-rails.dae]  # 启动前检查的模型资源
+# 机器人初始机身位姿：米、弧度。修改出生点只改这里。
+spawn: {x: -5.5, y: 6.0, height: 0.5, yaw: 0.0}

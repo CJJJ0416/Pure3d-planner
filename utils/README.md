@@ -1,4 +1,22 @@
-# Utils
+# Pure3D 核心组件与共用工具
+
+| 组件 | 职责 |
+|---|---|
+| [Filter](Filter/README.md) | 核心点云保留评分、训练、推理与显式过滤 |
+| [Traversability](Traversability/README.md) | 核心条件化可通行代价、教师数据、训练与推理 |
+| `PointTransformerV3/` | 固定版本的 PTv3 编码器源码 |
+| 其余工具模块 | 核心分块、几何、点云处理与编码器封装 |
+
+Usage（工作区根目录，使用 Pure3D Python 环境）：
+
+```bash
+python -m utils.Filter.inference.predict --help
+python -m utils.Traversability.training.train --help
+python -m utils.Traversability.inference.predict --help
+```
+
+数据、权重、训练记录和独立输出继续存放在工作区的 `datasets/`、`weights/`、`runs/` 与 `outputs/`。
+
 
 保存 PTv3 与任务间共用的点云处理工具。
 

@@ -1,0 +1,83 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+  - Class: rviz_common/Views
+    Name: Views
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Name: World grid
+      Enabled: true
+      Cell Size: 1
+      Plane Cell Count: 20
+    - Class: rviz_default_plugins/PointCloud2
+      Name: Local Tomogram trav_cost
+      Enabled: true
+      Topic:
+        Value: /entry/learning/slice_cost
+        Reliability Policy: Reliable
+        Durability Policy: Transient Local
+      Position Transformer: XYZ
+      Color Transformer: Intensity
+      Channel Name: trav_cost
+      Use rainbow: false
+      Autocompute Intensity Bounds: false
+      Min Intensity: 0
+      Max Intensity: 1
+      Min Color: 43; 194; 143
+      Max Color: 245; 91; 106
+      Style: Flat Squares
+      Size (m): 0.083
+      Alpha: 0.8
+    - Class: rviz_default_plugins/Path
+      Name: VST expert prefix
+      Enabled: true
+      Topic:
+        Value: /entry/learning/expert_path
+        Reliability Policy: Reliable
+        Durability Policy: Transient Local
+      Color: 255; 187; 77
+      Alpha: 1
+      Line Style: Billboards
+      Line Width: 0.04
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0.06
+    - Class: rviz_default_plugins/Path
+      Name: Learned support path
+      Enabled: true
+      Topic:
+        Value: /entry/learning/path
+        Reliability Policy: Reliable
+        Durability Policy: Transient Local
+      Color: 78; 194; 250
+      Alpha: 1
+      Line Style: Billboards
+      Line Width: 0.045
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0.13
+  Enabled: true
+  Global Options:
+    Fixed Frame: world
+    Background Color: 23; 32; 44
+  Tools:
+    - Class: rviz_default_plugins/Interact
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/FocusCamera
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 8.0
+      Pitch: 0.62
+      Yaw: 0.95
+      Focal Point:
+        X: 0
+        Y: 0
+        Z: 0
+Window Geometry:
+  Width: 1200
+  Height: 820

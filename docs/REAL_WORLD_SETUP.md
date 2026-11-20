@@ -61,7 +61,7 @@ map → camera_init → body
 | ROS | `/opt/ros/humble` |
 | Faster-LIO | 默认 `/home/cjh/livox_ws/install/faster_lio`，可用 `PURE3D_LIO_WS` 修改工作区 |
 | 完整 Livox 驱动源码 | 本机 `/home/cjh/livox_ws/src/livox_ros_driver2` |
-| 本仓库 Livox 包 | `common/livox_ros_driver2` 只提供消息接口，不能代替硬件驱动 |
+| 本仓库 Livox 包 | `Simulator/livox_ros_driver2` 只提供消息接口，不能代替硬件驱动 |
 | GPU 推理环境 | 见 [PTv3 环境](PTV3_CONDA_ENV.md)，ROS 与 GPU worker 分进程运行 |
 
 安装 Livox-SDK2 和完整 ROS 2 驱动，具体依赖见本机驱动源码的 README。该版本的构建方式为 `./build.sh humble`。其脚本会清理所在工作区的 `build`、`install`、`devel`，应在独立驱动工作区构建，避免清理现有 Faster-LIO 安装。一个运行环境中只加载一套名为 `livox_ros_driver2` 的消息/驱动包。
@@ -76,10 +76,8 @@ MID360 网口 IP、主机 IP 和实际设备地址写入驱动使用的 `MID360_
 
 ```bash
 cd /home/cjh/Pure3D_ws
-cp common/unitree_gazebo/real/config/frames.yaml \
-   common/unitree_gazebo/real/config/frames.robot.yaml
-cp common/unitree_gazebo/real/config/faster_lio.yaml \
-   common/unitree_gazebo/real/config/faster_lio.robot.yaml
+cp Entrance/config/real/frames.yaml  Entrance/config/real/frames.robot.yaml
+cp Entrance/config/real/faster_lio.yaml  Entrance/config/real/faster_lio.robot.yaml
 ```
 
 `frames.robot.yaml` 的结构如下。数字为格式示例，使用前替换为实测参数：
@@ -134,7 +132,7 @@ anchor:
 cd /home/cjh/Pure3D_ws
 export ROS_DOMAIN_ID=42 ROS_LOCALHOST_ONLY=0
 # 独立驱动工作区存在时，先按实际路径设置 PURE3D_REAL_UNDERLAY。
-source common/unitree_gazebo/real/env.sh
+source Entrance/shell/_internal/real_env.bash
 ros2 pkg prefix livox_ros_driver2
 ros2 pkg executables livox_ros_driver2
 ros2 launch livox_ros_driver2 msg_MID360_launch.py
@@ -147,11 +145,11 @@ ros2 launch livox_ros_driver2 msg_MID360_launch.py
 ```bash
 cd /home/cjh/Pure3D_ws
 export ROS_DOMAIN_ID=42 ROS_LOCALHOST_ONLY=0
-export PURE3D_LIO_FRAMES_CONFIG="$PWD/common/unitree_gazebo/real/config/frames.robot.yaml"
-export PURE3D_REAL_LIO_CONFIG="$PWD/common/unitree_gazebo/real/config/faster_lio.robot.yaml"
+export PURE3D_LIO_FRAMES_CONFIG="$PWD/Entrance/config/real/frames.robot.yaml"
+export PURE3D_REAL_LIO_CONFIG="$PWD/Entrance/config/real/faster_lio.robot.yaml"
 export PURE3D_LIO_OUTPUT="$PWD/outputs/unitree_real/lio_$(date +%Y%m%d_%H%M%S)"
-common/unitree_gazebo/real/run_faster_lio.sh --check-config
-common/unitree_gazebo/real/run_faster_lio.sh
+ros2 launch Entrance/launch/real/faster_lio_real.launch.py check_config:=true
+ros2 launch Entrance/launch/real/faster_lio_real.launch.py
 ```
 
 `--check-config` 需要已编译 Faster-LIO，只生成参数，不启动建图或 TF 桥。正常入口自动启动唯一的 TF 桥，并将原始里程计、原始 TF 分别重映射到 `/faster_lio/raw_odometry`、`/faster_lio/raw_tf`。Ctrl+C 同时结束该入口管理的建图和桥接进程。
@@ -163,7 +161,7 @@ common/unitree_gazebo/real/run_faster_lio.sh
 ```bash
 cd /home/cjh/Pure3D_ws
 export ROS_DOMAIN_ID=42 ROS_LOCALHOST_ONLY=0
-common/unitree_gazebo/real/view_faster_lio.sh
+ros2 launch Entrance/launch/real/rviz_real.launch.py
 ```
 
 该入口使用共享 SCAN RViz 配置。配置当前保存的 Fixed Frame 为 `world`，真机默认只有 `map` 链时，在 RViz 的 Global Options 中将 Fixed Frame 改为 `map`。启用 Faster-LIO 点云显示，确认 TF 状态正常。
@@ -173,7 +171,7 @@ common/unitree_gazebo/real/view_faster_lio.sh
 ```bash
 cd /home/cjh/Pure3D_ws
 export ROS_DOMAIN_ID=42 ROS_LOCALHOST_ONLY=0
-source common/unitree_gazebo/real/env.sh
+source Entrance/shell/_internal/real_env.bash
 ros2 topic type /livox/lidar
 ros2 topic type /livox/imu
 ros2 topic hz /faster_lio/cloud_registered
@@ -183,18 +181,18 @@ ros2 run tf2_ros tf2_echo map camera_init
 ros2 run tf2_ros tf2_echo camera_init body
 ```
 
-公共里程计和注册点云的父帧为 `camera_init`。RViz 通过 `map → camera_init` 显示点云。单独调试 `real/connect_map_tf.sh` 时，输入必须是原始 IMU 里程计 `/faster_lio/raw_odometry`，并先退出已有桥接进程。只有 TF、没有对应里程计消息的其他 LIO 接口，需要先适配桥接输入。
+公共里程计和注册点云的父帧为 `camera_init`。RViz 通过 `map → camera_init` 显示点云。单独调试 `Entrance/launch/real/map_tf_real.launch.py` 时，输入必须是原始 IMU 里程计 `/faster_lio/raw_odometry`，并先退出已有桥接进程。只有 TF、没有对应里程计消息的其他 LIO 接口，需要先适配桥接输入。
 
 ## 6. Entry 与 SCAN 的迁移项
 
-当前 `total_terminal.sh` 包含 Gazebo、仿真 keyboard 和模式切换，适用于仿真实验。真机使用上面的独立入口，并完成以下接口修改后再接入在线导航：
+当前 `Entrance/shell/total_terminal.sh` 包含 Gazebo、仿真 keyboard 和模式切换，适用于仿真实验。真机使用上面的独立入口，并完成以下接口修改后再接入在线导航：
 
 | 模块 | 当前绑定 | 真机处理 |
 |---|---|---|
-| Entry 配置 | `Entry/configs/local.yaml` 使用仿真时钟 | 改为真实时钟，统一所有节点的时间源 |
-| Entry 地图帧校验 | `Entry/utils/local_map.py` 限定 `world ← camera_init` | 参数化为重力对齐地图帧，或明确建立真实 world 链 |
+| Entry 配置 | `Entrance/config/local_cost.yaml` 使用仿真时钟 | 改为真实时钟，统一所有节点的时间源 |
+| Entry 地图帧校验 | `common/mapping/local_map.py` 限定 `world ← camera_init` | 参数化为重力对齐地图帧，或明确建立真实 world 链 |
 | Entry 局部盒子 | LIO 公共机身位姿，世界轴向 `6×6×5 m` | 保留独立维护，确认公共 body 是物理机身参考 |
-| SCAN odom | `workspace_topics.yaml` 的 `/Odometry_gazebo` | 接入经过安装修正的真实机身状态，统一 frame 与速度定义 |
+| SCAN odom | `Entrance/config/local_planners.yaml` 的 `/Odometry_gazebo` | 接入经过安装修正的真实机身状态，统一 frame 与速度定义 |
 | SCAN 点云 | 仿真 `/livox/lidar` 为 PointCloud2 | 真实驱动同名话题为 CustomMsg，需要 PointCloud2 输出或转换适配 |
 | SCAN sensor_pose | 仿真 `laser_livox` TF | 使用真实测量原点与安装标定，不能用 base 冒充雷达原点 |
 | A* 跟随与监测 | `local_astar_follow.py`、`monitor_local.py` 含 world、真值或仿真时间逻辑 | 移除 Gazebo 依赖，接入同一真实里程计与时钟 |
@@ -208,7 +206,7 @@ SCAN 感知盒沿世界轴，中心随雷达 sensor_pose 移动。Entry 盒子�
 
 ## 7. 当前局部 cost 参数
 
-`total_terminal.sh` 和 `run_cost.sh` 当前默认选择 Tiny best49。直接读取 `local.yaml` 而不指定模型时，其 `model` 仍为 Small best56。运行模型和校验值以会话内 `cost/local/model.json` 为准。
+`Entrance/shell/total_terminal.sh` 和 `Entrance/launch/sim/cost.launch.py` 当前默认选择 Tiny best49。直接读取 `Entrance/config/local_cost.yaml` 而不指定模型时，其 `model` 仍为 Small best56。运行模型和校验值以会话内 `cost/local/model.json` 为准。
 
 | 项目 | 当前值 |
 |---|---|
@@ -241,15 +239,15 @@ SCAN 感知盒沿世界轴，中心随雷达 sensor_pose 移动。Entry 盒子�
 | 盒子或预测停止更新 | LIO odom 时间、TF、输入过期原因、真实时钟配置 |
 | 楼梯点被删除 | KNN 邻居统计、距离与局部点密度，保存过滤前后点集对照 |
 
-录包时保留原始 LiDAR、IMU、TF、实际机器人状态及标定配置。真实时钟运行不需要仿真 `/clock`。当前 `run_faster_lio.sh --bag` 是仿真话题契约，真机回放需按真实驱动类型和时间源另行适配。
+录包时保留原始 LiDAR、IMU、TF、实际机器人状态及标定配置。真实时钟运行不需要仿真 `/clock`。当前 `faster_lio.launch.py bag:=...` 是仿真话题契约，真机回放需按真实驱动类型和时间源另行适配。
 
 ## 9. 对应源码
 
-- [真机入口与配置](../common/unitree_gazebo/real/README.md)
-- [安装外参与变换公式实现](../common/unitree_gazebo/scripts/frame_config.py)
-- [原始 IMU 位姿到公共机身的桥接](../common/unitree_gazebo/scripts/map_anchor.py)
-- [共享 LIO 启动器与输入检查](../common/unitree_gazebo/scripts/run_faster_lio.sh)
-- [Entry 局部 cost 配置](../Entry/configs/local.yaml)
-- [Entry 局部地图与配置校验](../Entry/utils/local_map.py)
-- [SCAN 接口配置](../common/SCAN-Planner/src/planner/plan_manage/config/workspace_topics.yaml)
-- [仿真局部 cost 操作说明](../Entry/docs/LOCAL_COST.md)
+- [真机入口与配置](../Simulator/unitree_gazebo/real/README.md)
+- [安装外参与变换公式实现](../Simulator/unitree_gazebo/scripts/frame_config.py)
+- [原始 IMU 位姿到公共机身的桥接](../Simulator/unitree_gazebo/scripts/map_anchor.py)
+- [共享 LIO 内部运行与输入检查](../Entrance/shell/_internal/lio_runtime.bash)
+- [Entry 局部 cost 配置](../Entrance/config/local_cost.yaml)
+- [Entry 局部地图与配置校验](../common/mapping/local_map.py)
+- [SCAN 接口配置](../Entrance/config/local_planners.yaml)
+- [仿真局部 cost 操作说明](../common/cost/docs/LOCAL_COST.md)
